@@ -15,7 +15,9 @@ function rng(seed=41027){return()=>{let t=seed+=0x6D2B79F5;t=Math.imul(t^(t>>>15
 const random=rng(20261012),rr=(a,b)=>a+(b-a)*random();
 
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true});
-renderer.setSize(W,H,false);renderer.setPixelRatio(1);renderer.setClearColor(C.black,1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;document.body.appendChild(renderer.domElement);
+renderer.setSize(W,H,false);renderer.setPixelRatio(1);renderer.setClearColor(C.black,1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;
+const container = document.getElementById('canvas-container') || document.body;
+container.appendChild(renderer.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(C.black);scene.fog=new THREE.FogExp2(C.black,.018);
 const camera=new THREE.PerspectiveCamera(38,W/H,.1,260);scene.add(camera);
 const target=new V();
@@ -39,8 +41,6 @@ function particleMaterial(size,opacity){return new THREE.ShaderMaterial({transpa
 const STARS=700,starBase=[],starPos=new Float32Array(STARS*3),starCol=new Float32Array(STARS*3);
 for(let i=0;i<STARS;i++){const z=rr(-105,38),x=rr(-80,80),y=rr(-46,46),near=z>6;starBase.push({x,y,z,near,rate:rr(.04,.25),phase:rr(0,6.28)});starPos.set([x,y,z],i*3);const col=new THREE.Color(i%17===0?C.pink:i%13===0?C.gold:C.cyan),f=near?.52:z>-20?.31:.14;starCol.set([col.r*f,col.g*f,col.b*f],i*3)}
 const starGeo=new THREE.BufferGeometry();starGeo.setAttribute('position',new THREE.BufferAttribute(starPos,3).setUsage(THREE.DynamicDrawUsage));starGeo.setAttribute('color',new THREE.BufferAttribute(starCol,3));starGeo.boundingSphere=new THREE.Sphere(new V(),180);const stars=new THREE.Points(starGeo,particleMaterial(6.2,.88));scene.add(stars);
-
-// ---- Safe-area typography: only one message lands at a time. ----
 const hud=group('safe area titles',camera);
 function title(s,width,color=C.ice,glow='#4adfff'){return text(hud,s,width,{size:142,color:color===C.red?'#ff8796':'#f3fbff',stroke:color===C.red?'#ff2d49':'#58e8ff',glow,weight:800,opacity:0})}
 const howTitle=title('HOW FAR CAN INTELLIGENCE GO?',24);howTitle.position.set(0,0,-19);
@@ -87,7 +87,7 @@ const memoryRings=[];for(let i=0;i<5;i++){const r=torus(learning,11+i*1.7,.035,C
 
 // ---- Resource constraints: four literal inputs feeding one core --------------------------
 const compute=group('compute resource system');const computeCore=group('AI core',compute);const coreBody=box(computeCore,8.8,4.4,5,C.ice,.7,false),coreFrame=box(computeCore,9.3,4.9,5.5,C.cyan,.82);const coreLabel=label(computeCore,'AI MODEL',0,0,3.1,7.4,{size:64});const coreHalo=torus(computeCore,4.4,.09,C.cyan,.55);coreHalo.rotation.x=Math.PI/2;
-function resource(name,pos,color,kind){const g=group(name,compute);g.position.set(...pos);const halo=torus(g,2.1,.08,color,.55);const body=group('icon',g);if(kind==='chip'){const b=box(body,2.8,2.8,1.0,color,.8);b.position.z=.1;for(let i=-.7;i<=.7;i+=.7){line(body,new V(-2,i,0),new V(-1.3,i,0),lineMaterial(color,.8));line(body,new V(1.3,i,0),new V(2,i,0),lineMaterial(color,.8))}}if(kind==='energy'){const b=box(body,2.8,2.7,1.1,color,.85);b.position.z=.1;const plus=line(body,new V(-.7,0,.7),new V(.7,0,.7),lineMaterial(color,1));line(body,new V(0,-.7,.7),new V(0,.7,.7),lineMaterial(color,1))}if(kind==='data'){for(let i=0;i<4;i++){const b=box(body,3.2,.45,.8,color,.8);b.position.y=1.0-i*.65}}if(kind==='time'){const r=torus(body,1.35,.10,color,.9);const hand=line(body,new V(0,0,.3),new V(.75,.55,.3),lineMaterial(color,.95));body.userData.hand=hand}const l=label(compute,name,0,-3.2,.2,6.2,{size:52,color:'#f3fbff',stroke:color===C.gold?'#ffad59':'#52e8ff',glow:color===C.gold?'#ff873a':'#52e8ff'});l.position.add(g.position);return{g,halo,body,l,pos:new V(...pos),color}}
+function resource(name,pos,color,kind){const g=group(name,compute);g.position.set(...pos);const halo=torus(g,2.1,.08,color,.55);const body=group('icon',g);if(kind==='chip'){const b=box(body,2.8,2.8,1.0,color,.8);b.position.z=.1;for(let i=-.7;i<=.7;i+=.7){line(body,new V(-2,i,0),new V(-1.3,i,0),lineMaterial(color,.8));line(body,new V(1.3,i,0),new V(2,i,0),lineMaterial(color,.8))}}if(kind==='energy'){const b=box(body,2.8,2.7,1.1,color,.85);b.position.z=.1;const plus=line(body,new V(-.7,0,.7),new V(.7,0,.7),lineMaterial(color,1));line(body,new V(0,-.7,.7),new V(0,.7,.7),lineMaterial(color,1))}if(kind==='data'){for(let i=0;i<4;i++){const b=box(body,3.2,.45,.8,color,.8);b.position.y=1.0-i*.65}}if(kind==='time'){const r=torus(body,1.35,.10,color,.9);const hand=line(body,new V(0,0,.3),new V(.75,.55,.3),lineMaterial(color,.95));body.userData.hand=hand}const l=label(compute,name,0,-3.2,.2,6.2,{size:52,color:'#f3fbff',stroke:color===C.gold?'#ffad59':'#52e8ff',glow:color===C.gold?'#ff873a':'#52e8ff'});l.position.add(g.position);return{g,halo,body,l,pos:new V(...pos),color}}\
 const resources=[resource('COMPUTE',[-13,8,-2],C.cyan,'chip'),resource('ENERGY',[13,8,1],C.gold,'energy'),resource('DATA',[-13,-8,2],C.pink,'data'),resource('TIME',[13,-8,-1],C.mint,'time')];const resourcePaths=resources.map(r=>cylinder(compute,r.pos,new V(0,0,0),.075,r.color,.78));const resourceSignals=resources.map(r=>{const g=group('resource signal',compute);sphere(g,.22,r.color,1);sphere(g,.5,r.color,.15);return{g,r}});const reliableBar=box(compute,7,.55,.25,C.mint,.85,false),costBar=box(compute,7,.55,.25,C.gold,.85,false);reliableBar.position.set(-8,-9.2,0);costBar.position.set(8,-9.2,0);const reliableLabel=label(compute,'RELIABLE OUTPUT',-8,-10.8,0,7.4,{size:40,color:'#e0fff2',stroke:'#73f3c5',glow:'#52dfa8'}),costLabel=label(compute,'RESOURCE COST',8,-10.8,0,7.4,{size:40,color:'#fff0dd',stroke:'#ffad59',glow:'#ff873a'});
 
 // ---- Interdependent capabilities: no literal door; modules form a clear system around AGI. ----
@@ -108,5 +108,43 @@ function updateCompute(t){const q=t-115,a=fade(t,114,116)*(1-fade(t,143,145));al
 function updateSystems(t){const q=t-145,a=fade(t,144,146)*(1-fade(t,178,180));alpha(systems,a);const appear=fade(q,0,5),connect=fade(q,5,10),uncertain=fade(q,16,17.5)*(1-fade(q,25,27)),fadeModules=1-fade(q,12.7,15.6),linkFade=1-fade(q,11,14.2),coreFade=1-fade(q,12.0,14.3);alpha(systemCore,a*appear*coreFade);systemCore.scale.setScalar(.45+.55*appear);for(let i=0;i<modules.length;i++){const m=modules[i],on=fade(q,i*.75,i*.75+2.2)*fadeModules;m.g.scale.setScalar(on*(.96+.06*Math.sin(q+i)));m.glow.material.opacity=.10*a*on*(1+Math.max(0,Math.sin(q*1.6+i)));m.core.material.opacity=.95*a*on;m.ring.material.opacity=.75*a*on;m.l.material.opacity=a*on}for(const l of systemLinks)l.material.opacity=.52*a*connect*linkFade;for(const l of orbitLinks)l.material.opacity=.22*a*connect*linkFade;coreQ.material.opacity=a*appear*coreFade;setOp(uncertaintyTitle,a*uncertain*.92);systems.rotation.y=.1*Math.sin(q*.11)}
 function updateFinal(t){const q=t-180,a=fade(t,179,181),network=fade(q,1,10)*(1-fade(q,15,18)),brandOn=fade(q,26,27.2);alpha(final,a);finalCore.material.opacity=a*network;for(let i=0;i<finalNodes.length;i++){const n=finalNodes[i],on=fade(q,1+i*.08,3+i*.08)*network;n.n.scale.setScalar(on);n.h.material.opacity=.08*a*on;n.c.material.opacity=.9*a*on}for(let i=0;i<finalEdges.length;i++)finalEdges[i].material.opacity=.34*a*fade(q,3+i*.07,5+i*.07)*network;final.rotation.y=q*.035;const question=fade(q,16,18)*(1-fade(q,25.5,26.2));setOp(finalTitle,a*question*.95);if(logoSprite){logoGroup.visible=brandOn>.002;logoSprite.material.opacity=a*brandOn;logoR1.material.opacity=.82*a*brandOn;logoR2.material.opacity=.58*a*brandOn;logoR1.rotation.z=q*.7;logoR2.rotation.z=-q*1.05;brand.material.opacity=a*fade(q,26.4,27.35);tagline.material.opacity=a*fade(q,26.7,27.55);logoGroup.scale.setScalar(.84+.16*out((q-26)/1.3))}}
 function updateTitles(t){setOp(howTitle,fade(t,13.8,14.5)*(1-fade(t,19.3,19.8))*.92);setOp(agiTitle,fade(t,19.8,20.25)*(1-fade(t,23.7,24.2))*.95);setOp(reliableTitle,fade(t,49.2,50)*(1-fade(t,53,53.6))*.88);setOp(patternTitle,fade(t,77,78)*(1-fade(t,81,81.6))*.88);setOp(learnTitle,fade(t,105,106)*(1-fade(t,111.5,112.2))*.85);setOp(computeTitle,fade(t,133,134)*(1-fade(t,141,142))*.90)}
+
 async function renderFrame(frame){const t=clamp(frame/FPS,0,DURATION);updateStars(t);updateOpening(t);updateTree(t);updateWorld(t);updateLearning(t);updateCompute(t);updateSystems(t);updateFinal(t);updateTitles(t);cameraAt(t);renderer.render(scene,camera);return{frame,t}}
-await loadLogo();window.renderFrame=renderFrame;window.__sceneReady=true;renderFrame(0);
+
+await loadLogo();
+
+// ---- Interactive Player & Animation Loop ----
+let currentTime = 0;
+let isPlaying = true;
+let playbackSpeed = 1.0;
+let lastTimestamp = performance.now();
+
+function animate(now) {
+  requestAnimationFrame(animate);
+  const delta = (now - lastTimestamp) / 1000;
+  lastTimestamp = now;
+
+  if (isPlaying) {
+    currentTime += delta * playbackSpeed;
+    if (currentTime > DURATION) currentTime = 0;
+    renderFrame(Math.round(currentTime * FPS));
+    if (window.updateUIPlayback) {
+      window.updateUIPlayback(currentTime, DURATION);
+    }
+  }
+}
+
+window.__togglePlayback = (play) => { isPlaying = play; };
+window.__seekToTime = (t) => {
+  currentTime = clamp(t, 0, DURATION);
+  renderFrame(Math.round(currentTime * FPS));
+  if (window.updateUIPlayback) window.updateUIPlayback(currentTime, DURATION);
+};
+window.__setPlaybackSpeed = (s) => { playbackSpeed = s; };
+
+window.renderFrame = renderFrame;
+window.__sceneReady = true;
+
+// Start loop
+renderFrame(0);
+requestAnimationFrame(animate);
