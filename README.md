@@ -28,9 +28,7 @@ python3 -m http.server 8000
 
 - `index.html` — 16:9 預覽播放器、時間軸、章節跳轉及同步音軌
 - `src/v4_particle_documentary.js` — V4 Three.js 場景與以音訊媒體時鐘驅動的即時播放
-- `assets/audio/final_mix.mp3` — 3:30 英文旁白與配樂完整混音，播放器使用此檔
-- `assets/audio/narration/` — 七段分軌英文旁白 WAV
-- `assets/audio/music/` — 兩段配樂來源（MP3）
+- `assets/audio/` — 完整混音（MP3 播放版及 WAV 無損母檔）、七段分軌旁白及兩段配樂
 - `render_v4.js` — Puppeteer／Chromium 逐格算圖工具
 - `render/Super_Intelligent_AGI_Bottleneck_V4_1080p.mp4` — 最終成片規格記錄於 `V4_DELIVERY_NOTES.md`；大型成片未放入 repo
 
