@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="data:," />
   <link rel="modulepreload" href="./assets/vendor/three.module.js" />
-  <title>SUPER INTELLIGENT — V5 開場預覽</title>
+  <title>SUPER INTELLIGENT — V5 連續預覽</title>
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; width: 100%; min-height: 100%; background: #010308; color: #eaffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
@@ -55,20 +55,20 @@
 </head>
 <body>
   <main id="player-shell">
-    <div id="stage-wrapper" aria-label="V5開場動畫畫面">
+    <div id="stage-wrapper" aria-label="V5連續動畫預覽畫面">
       <div id="canvas-container"></div>
     </div>
     <section id="player-controls" aria-label="預覽播放控制">
       <div class="control-row">
         <button class="button" id="play" type="button" aria-label="播放">播放</button>
-        <span id="time" aria-live="off">00:00 / 00:22</span>
-        <input id="timeline" type="range" min="0" max="22.2" value="0" step="0.05" aria-label="播放位置" />
+        <span id="time" aria-live="off">00:00 / 00:50</span>
+        <input id="timeline" type="range" min="0" max="50.76" value="0" step="0.05" aria-label="播放位置" />
         <button class="button" id="speed" type="button" aria-label="播放速度">1.0×</button>
         <button class="button" id="chapter-toggle" type="button" aria-expanded="true" aria-controls="secondary">收起章節</button>
       </div>
       <div id="secondary">
-        <div id="status" role="status">按「播放」開始旁白同步預覽；預覽只涵蓋 00:00–00:22.2。</div>
-        <nav id="chapters" aria-label="開場片段章節">
+        <div id="status" role="status">按「播放」開始連續旁白同步預覽；目前涵蓋 00:00–00:50.76。</div>
+        <nav id="chapters" aria-label="V5連續預覽章節">
           <button class="chapter active" type="button" data-time="0.0">00:00 速度建立</button>
           <button class="chapter" type="button" data-time="4.34">00:04 寫程式</button>
           <button class="chapter" type="button" data-time="6.03">00:06 解難</button>
@@ -77,19 +77,24 @@
           <button class="chapter" type="button" data-time="14.62">約00:15 How far</button>
           <button class="chapter" type="button" data-time="17.02">00:17 Scaling</button>
           <button class="chapter" type="button" data-time="19.12">約00:19 AGI問句</button>
+          <button class="chapter" type="button" data-time="22.20">00:22 推理不是答案</button>
+          <button class="chapter" type="button" data-time="30.08">00:30 多步驟決策</button>
+          <button class="chapter" type="button" data-time="37.16">00:37 錯誤傳播</button>
+          <button class="chapter" type="button" data-time="41.30">00:41 可靠性</button>
+          <button class="chapter" type="button" data-time="45.60">00:45 新問題測試</button>
         </nav>
       </div>
     </section>
     <div id="page-note">
-      <span>V5 任務 1／8 · 開場與核心問題 · 只預覽 00:00–00:22.2</span>
-      <span><a class="text-link" href="./v5-task02-preview.html">下一段：任務 2 推理（00:22.2–00:45.6）</a> · <a class="text-link" href="./">返回 V4 全片預覽</a></span>
+      <span>V5 單頁連續預覽 · 已整合 00:00–00:50.76 · 目前含任務1及2</span>
+      <span><a class="text-link" href="./">返回 V4 全片預覽</a></span>
     </div>
-    <audio id="audio" preload="metadata" src="./assets/audio/v5_task01_opening_00_22.mp3"></audio>
+    <audio id="audio" preload="auto" src="./assets/audio/v5_continuous_preview_00_50_76.mp3"></audio>
   </main>
-  <script type="module" src="./src/v5_opening_preview.js"></script>
+  <script type="module" src="./src/v5_continuous_preview.js"></script>
   <script type="module">
     const FPS = 24;
-    const PREVIEW_DURATION = 22.2;
+    const PREVIEW_DURATION = 50.76;
     const audio = document.getElementById('audio');
     const playButton = document.getElementById('play');
     const timeline = document.getElementById('timeline');
@@ -118,7 +123,7 @@
         lastFrame = frame;
       }
       if (document.activeElement !== timeline) timeline.value = String(safeTime);
-      timeLabel.textContent = `${formatTime(safeTime)} / 00:22`;
+      timeLabel.textContent = `${formatTime(safeTime)} / ${formatTime(PREVIEW_DURATION)}`;
       chapters.forEach(button => {
         const t = Number(button.dataset.time);
         const next = chapters.find(x => Number(x.dataset.time) > t);
@@ -175,7 +180,7 @@
     audio.addEventListener('loadedmetadata', () => {
       timeline.max = PREVIEW_DURATION;
       draw(audio.currentTime, true);
-      status.textContent = '旁白與動畫已就緒；按「播放」開始同步預覽。';
+      status.textContent = '連續旁白音軌已就緒；按「播放」開始同步預覽。';
     });
     audio.addEventListener('play', () => setPlayState(true, '播放中 · 畫面以旁白音軌作主時鐘。'));
     audio.addEventListener('pause', () => {
@@ -188,7 +193,7 @@
     audio.addEventListener('waiting', () => status.textContent = '音訊載入中；畫面會停留在相同媒體時間。');
     audio.addEventListener('ended', () => {
       draw(PREVIEW_DURATION, true);
-      setPlayState(false, '第一段預覽已播放完；按「播放」可重播。');
+      setPlayState(false, '目前完成的V5預覽已播放完；按「播放」可重播。');
     });
     audio.addEventListener('error', () => setPlayState(false, '預覽音訊載入失敗，請稍後重試。'));
 

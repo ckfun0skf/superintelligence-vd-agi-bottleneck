@@ -38,13 +38,14 @@ const rr = (lo, hi) => lo + (hi - lo) * rand();
 const V3 = THREE.Vector3;
 
 const container = document.getElementById('canvas-container');
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+const standalone = !window.__V5_SHARED_RENDERER;
+const renderer = window.__V5_SHARED_RENDERER || new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.setClearColor(COLOR.black, 1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
-container.appendChild(renderer.domElement);
+if (standalone) container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(COLOR.black);
@@ -192,6 +193,7 @@ for (let i = 0; i < STAR_COUNT; i++) {
   starColors.set([color.r * depth, color.g * depth, color.b * depth], i * 3);
 }
 const starCloud = makePoints(scene, starPositions, starColors, 5.2, 0.8);
+window.__V5_SHARED_STAR_GEOMETRY = starCloud.geometry;
 
 // Opening acceleration: many separate trajectories converge, then sweep past camera.
 const opening = new THREE.Group();
@@ -430,6 +432,35 @@ for (let i = 0; i < DUST_COUNT; i++) {
 }
 const titleDust = makePoints(titleLayer, dustPositions, dustColors, 5.4, 0.0);
 
+// Publish the exact end-state particle field and camera so the reasoning scene
+// can inherit this same 3D state instead of cutting to a newly generated cloud.
+const handoffCount = BURST_COUNT + DUST_COUNT;
+const handoffPositions = new Float32Array(handoffCount * 3);
+const handoffColors = new Float32Array(handoffCount * 3);
+const handoffCameraPosition = new V3();
+const handoffCameraTarget = new V3();
+const handoffPoint = new V3();
+window.__V5_HANDOFF_FIELD = { positions: handoffPositions, colors: handoffColors, count: handoffCount, cameraPosition: handoffCameraPosition, cameraTarget: handoffCameraTarget };
+function updateHandoffField() {
+  scene.updateMatrixWorld(true);
+  const burst = burstCloud.geometry.attributes.position.array;
+  for (let i = 0; i < BURST_COUNT; i++) {
+    const j = i * 3;
+    handoffPoint.set(burst[j], burst[j + 1], burst[j + 2]).applyMatrix4(scatterGroup.matrixWorld);
+    handoffPositions[j] = handoffPoint.x; handoffPositions[j + 1] = handoffPoint.y; handoffPositions[j + 2] = handoffPoint.z;
+    handoffColors[j] = burstColors[j]; handoffColors[j + 1] = burstColors[j + 1]; handoffColors[j + 2] = burstColors[j + 2];
+  }
+  const dust = titleDust.geometry.attributes.position.array;
+  for (let i = 0; i < DUST_COUNT; i++) {
+    const j = (BURST_COUNT + i) * 3, k = i * 3;
+    handoffPoint.set(dust[i * 3], dust[i * 3 + 1], dust[i * 3 + 2]).applyMatrix4(titleDust.object.matrixWorld);
+    handoffPositions[j] = handoffPoint.x; handoffPositions[j + 1] = handoffPoint.y; handoffPositions[j + 2] = handoffPoint.z;
+    handoffColors[j] = dustColors[k]; handoffColors[j + 1] = dustColors[k + 1]; handoffColors[j + 2] = dustColors[k + 2];
+  }
+  handoffCameraPosition.copy(camera.position);
+  handoffCameraTarget.copy(aim);
+}
+
 function cameraAt(t) {
   if (t < 4.3) {
     const q = smooth(t / 4.3);
@@ -641,6 +672,7 @@ function renderFrame(frame) {
   updateInformation(t);
   updateGenerations(t);
   updateQuestion(t);
+  if (t >= DURATION - 1 / FPS) updateHandoffField();
   renderer.render(scene, camera);
   return { frame, time: t };
 }
@@ -651,9 +683,12 @@ function resize() {
   renderer.setSize(width, height, false);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderFrame(Math.round((window.__playerTime || 0) * FPS));
+  if (standalone) renderFrame(Math.round((window.__playerTime || 0) * FPS));
 }
-window.addEventListener('resize', resize);
-window.renderFrame = renderFrame;
-window.__sceneReady = true;
-resize();
+if (standalone) {
+  window.addEventListener('resize', resize);
+  window.renderFrame = renderFrame;
+  window.__sceneReady = true;
+  resize();
+}
+export { renderFrame, resize };
