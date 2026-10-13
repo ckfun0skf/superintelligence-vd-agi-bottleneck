@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
   <title>SUPER INTELLIGENT — AGI Bottleneck Interactive Preview</title>
   <style>
     * { box-sizing: border-box; }
@@ -90,6 +91,13 @@
       min-width: 95px;
       font-weight: bold;
     }
+    #audio-status {
+      color: #b0cddb;
+      font-size: 11px;
+      text-align: center;
+      min-height: 14px;
+    }
+    #audio-track { display: none; }
     #timeline-slider {
       flex: 1;
       accent-color: #5ae8ff;
@@ -144,14 +152,18 @@
 <body>
   <div id="stage-wrapper">
     <div id="canvas-container"></div>
+    <audio id="audio-track" preload="metadata">
+      <source src="./assets/audio/final_mix.mp3" type="audio/mpeg" />
+    </audio>
     <button id="hud-toggle-btn">Toggle Controls (H)</button>
     <div id="ui-hud">
       <div class="hud-row">
-        <button id="play-btn" class="hud-btn">Pause</button>
+        <button id="play-btn" class="hud-btn">Play</button>
         <span id="time-display">00:00 / 03:30</span>
         <input type="range" id="timeline-slider" min="0" max="210" step="0.05" value="0" />
         <button id="speed-btn" class="hud-btn">1.0x</button>
       </div>
+      <div id="audio-status">Audio is ready · press Play to start synced preview</div>
       <div class="hud-row nav-pills">
         <span class="nav-pill" data-time="0">0:00 Opening</span>
         <span class="nav-pill" data-time="22">0:22 Decision Tree</span>
@@ -176,7 +188,7 @@
       const hudToggle = document.getElementById('hud-toggle-btn');
       const pills = document.querySelectorAll('.nav-pill');
 
-      let isPlaying = true;
+      let isPlaying = false;
       let playbackSpeed = 1.0;
       const speeds = [0.5, 1.0, 1.5, 2.0];
       let speedIdx = 1;
@@ -199,6 +211,12 @@
         });
       };
 
+      window.updateUIPlaybackState = function(playing, message) {
+        isPlaying = playing;
+        playBtn.textContent = playing ? 'Pause' : 'Play';
+        document.getElementById('audio-status').textContent = message;
+      };
+
       playBtn.addEventListener('click', () => {
         isPlaying = !isPlaying;
         playBtn.textContent = isPlaying ? 'Pause' : 'Play';
@@ -209,6 +227,7 @@
         const val = parseFloat(e.target.value);
         if (window.__seekToTime) window.__seekToTime(val);
       });
+      slider.addEventListener('change', () => slider.blur());
 
       speedBtn.addEventListener('click', () => {
         speedIdx = (speedIdx + 1) % speeds.length;
@@ -232,7 +251,7 @@
       });
 
       window.addEventListener('keydown', (e) => {
-        if (e.code === 'Space') {
+        if (e.code === 'Space' && !['BUTTON', 'INPUT'].includes(document.activeElement?.tagName)) {
           e.preventDefault();
           playBtn.click();
         } else if (e.key === 'h' || e.key === 'H') {

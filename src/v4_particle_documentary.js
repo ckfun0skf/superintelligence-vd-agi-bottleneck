@@ -87,7 +87,7 @@ const memoryRings=[];for(let i=0;i<5;i++){const r=torus(learning,11+i*1.7,.035,C
 
 // ---- Resource constraints: four literal inputs feeding one core --------------------------
 const compute=group('compute resource system');const computeCore=group('AI core',compute);const coreBody=box(computeCore,8.8,4.4,5,C.ice,.7,false),coreFrame=box(computeCore,9.3,4.9,5.5,C.cyan,.82);const coreLabel=label(computeCore,'AI MODEL',0,0,3.1,7.4,{size:64});const coreHalo=torus(computeCore,4.4,.09,C.cyan,.55);coreHalo.rotation.x=Math.PI/2;
-function resource(name,pos,color,kind){const g=group(name,compute);g.position.set(...pos);const halo=torus(g,2.1,.08,color,.55);const body=group('icon',g);if(kind==='chip'){const b=box(body,2.8,2.8,1.0,color,.8);b.position.z=.1;for(let i=-.7;i<=.7;i+=.7){line(body,new V(-2,i,0),new V(-1.3,i,0),lineMaterial(color,.8));line(body,new V(1.3,i,0),new V(2,i,0),lineMaterial(color,.8))}}if(kind==='energy'){const b=box(body,2.8,2.7,1.1,color,.85);b.position.z=.1;const plus=line(body,new V(-.7,0,.7),new V(.7,0,.7),lineMaterial(color,1));line(body,new V(0,-.7,.7),new V(0,.7,.7),lineMaterial(color,1))}if(kind==='data'){for(let i=0;i<4;i++){const b=box(body,3.2,.45,.8,color,.8);b.position.y=1.0-i*.65}}if(kind==='time'){const r=torus(body,1.35,.10,color,.9);const hand=line(body,new V(0,0,.3),new V(.75,.55,.3),lineMaterial(color,.95));body.userData.hand=hand}const l=label(compute,name,0,-3.2,.2,6.2,{size:52,color:'#f3fbff',stroke:color===C.gold?'#ffad59':'#52e8ff',glow:color===C.gold?'#ff873a':'#52e8ff'});l.position.add(g.position);return{g,halo,body,l,pos:new V(...pos),color}}\
+function resource(name,pos,color,kind){const g=group(name,compute);g.position.set(...pos);const halo=torus(g,2.1,.08,color,.55);const body=group('icon',g);if(kind==='chip'){const b=box(body,2.8,2.8,1.0,color,.8);b.position.z=.1;for(let i=-.7;i<=.7;i+=.7){line(body,new V(-2,i,0),new V(-1.3,i,0),lineMaterial(color,.8));line(body,new V(1.3,i,0),new V(2,i,0),lineMaterial(color,.8))}}if(kind==='energy'){const b=box(body,2.8,2.7,1.1,color,.85);b.position.z=.1;const plus=line(body,new V(-.7,0,.7),new V(.7,0,.7),lineMaterial(color,1));line(body,new V(0,-.7,.7),new V(0,.7,.7),lineMaterial(color,1))}if(kind==='data'){for(let i=0;i<4;i++){const b=box(body,3.2,.45,.8,color,.8);b.position.y=1.0-i*.65}}if(kind==='time'){const r=torus(body,1.35,.10,color,.9);const hand=line(body,new V(0,0,.3),new V(.75,.55,.3),lineMaterial(color,.95));body.userData.hand=hand}const l=label(compute,name,0,-3.2,.2,6.2,{size:52,color:'#f3fbff',stroke:color===C.gold?'#ffad59':'#52e8ff',glow:color===C.gold?'#ff873a':'#52e8ff'});l.position.add(g.position);return{g,halo,body,l,pos:new V(...pos),color}}
 const resources=[resource('COMPUTE',[-13,8,-2],C.cyan,'chip'),resource('ENERGY',[13,8,1],C.gold,'energy'),resource('DATA',[-13,-8,2],C.pink,'data'),resource('TIME',[13,-8,-1],C.mint,'time')];const resourcePaths=resources.map(r=>cylinder(compute,r.pos,new V(0,0,0),.075,r.color,.78));const resourceSignals=resources.map(r=>{const g=group('resource signal',compute);sphere(g,.22,r.color,1);sphere(g,.5,r.color,.15);return{g,r}});const reliableBar=box(compute,7,.55,.25,C.mint,.85,false),costBar=box(compute,7,.55,.25,C.gold,.85,false);reliableBar.position.set(-8,-9.2,0);costBar.position.set(8,-9.2,0);const reliableLabel=label(compute,'RELIABLE OUTPUT',-8,-10.8,0,7.4,{size:40,color:'#e0fff2',stroke:'#73f3c5',glow:'#52dfa8'}),costLabel=label(compute,'RESOURCE COST',8,-10.8,0,7.4,{size:40,color:'#fff0dd',stroke:'#ffad59',glow:'#ff873a'});
 
 // ---- Interdependent capabilities: no literal door; modules form a clear system around AGI. ----
@@ -113,38 +113,93 @@ async function renderFrame(frame){const t=clamp(frame/FPS,0,DURATION);updateStar
 
 await loadLogo();
 
-// ---- Interactive Player & Animation Loop ----
+// ---- Interactive player: audio.currentTime is the master clock for every frame. ----
+const audio = document.getElementById('audio-track');
 let currentTime = 0;
-let isPlaying = true;
+let isPlaying = false;
 let playbackSpeed = 1.0;
-let lastTimestamp = performance.now();
+let isSeeking = false;
+let lastRenderedFrame = -1;
 
-function animate(now) {
-  requestAnimationFrame(animate);
-  const delta = (now - lastTimestamp) / 1000;
-  lastTimestamp = now;
-
-  if (isPlaying) {
-    currentTime += delta * playbackSpeed;
-    if (currentTime > DURATION) currentTime = 0;
-    renderFrame(Math.round(currentTime * FPS));
-    if (window.updateUIPlayback) {
-      window.updateUIPlayback(currentTime, DURATION);
-    }
+function drawAtCurrentTime() {
+  const frame = Math.round(currentTime * FPS);
+  if (frame !== lastRenderedFrame) {
+    renderFrame(frame);
+    lastRenderedFrame = frame;
   }
+  if (window.updateUIPlayback) window.updateUIPlayback(currentTime, DURATION);
 }
 
-window.__togglePlayback = (play) => { isPlaying = play; };
-window.__seekToTime = (t) => {
-  currentTime = clamp(t, 0, DURATION);
-  renderFrame(Math.round(currentTime * FPS));
-  if (window.updateUIPlayback) window.updateUIPlayback(currentTime, DURATION);
+function syncToAudio() {
+  if (audio && !isSeeking && Number.isFinite(audio.currentTime)) currentTime = clamp(audio.currentTime, 0, DURATION);
+  drawAtCurrentTime();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  // Reading the media clock every frame prevents accumulated drift and freezes
+  // the animation whenever playback is paused or waiting for buffered audio.
+  if (audio && !audio.paused && !isSeeking) syncToAudio();
+}
+
+window.__togglePlayback = async (play) => {
+  isPlaying = Boolean(play);
+  if (!audio) {
+    isPlaying = false;
+    if (window.updateUIPlaybackState) window.updateUIPlaybackState(false, 'Audio file unavailable');
+    return;
+  }
+  if (isPlaying) {
+    if (audio.ended || currentTime >= DURATION) {
+      audio.currentTime = 0;
+      currentTime = 0;
+    }
+    try {
+      await audio.play();
+    } catch (error) {
+      isPlaying = false;
+      if (window.updateUIPlaybackState) window.updateUIPlaybackState(false, 'Press Play to enable audio');
+    }
+  } else {
+    audio.pause();
+  }
 };
-window.__setPlaybackSpeed = (s) => { playbackSpeed = s; };
+window.__seekToTime = (t) => {
+  currentTime = clamp(Number(t) || 0, 0, DURATION);
+  if (audio && Number.isFinite(audio.duration)) {
+    const targetTime = Math.min(currentTime, audio.duration);
+    if (Math.abs(audio.currentTime - targetTime) > 0.03) {
+      isSeeking = true;
+      audio.currentTime = targetTime;
+    }
+  }
+  drawAtCurrentTime();
+};
+window.__setPlaybackSpeed = (s) => {
+  playbackSpeed = clamp(Number(s) || 1, 0.25, 2);
+  if (audio) audio.playbackRate = playbackSpeed;
+};
+window.__getPlaybackState = () => ({ currentTime, isPlaying, playbackSpeed, audioTime: audio?.currentTime ?? null, audioPaused: audio?.paused ?? true });
+
+if (audio) {
+  audio.addEventListener('seeking', () => { isSeeking = true; });
+  audio.addEventListener('seeked', () => { isSeeking = false; syncToAudio(); });
+  audio.addEventListener('play', () => { isPlaying = true; if (window.updateUIPlaybackState) window.updateUIPlaybackState(true, 'Audio synced'); });
+  audio.addEventListener('pause', () => { isPlaying = false; if (window.updateUIPlaybackState) window.updateUIPlaybackState(false, 'Paused'); });
+  audio.addEventListener('ended', () => {
+    isPlaying = false;
+    currentTime = 0;
+    audio.currentTime = 0;
+    syncToAudio();
+    if (window.updateUIPlaybackState) window.updateUIPlaybackState(false, 'Ready');
+  });
+  audio.addEventListener('error', () => { if (window.updateUIPlaybackState) window.updateUIPlaybackState(false, 'Could not load audio'); });
+  audio.addEventListener('loadedmetadata', syncToAudio, { once: true });
+}
 
 window.renderFrame = renderFrame;
 window.__sceneReady = true;
 
-// Start loop
+// Start on the first frame and wait for the user's Play gesture (browser audio policy).
 renderFrame(0);
 requestAnimationFrame(animate);
