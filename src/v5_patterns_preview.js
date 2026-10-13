@@ -15,6 +15,10 @@ const RED = 0xff3854;
 const SOIL = 0x704a34;
 const DRY = 0xb87a50;
 const settleColor = new THREE.Color(CYAN);
+const HEALTHY_STEM = new THREE.Color(0x65cb83);
+const DRY_STEM = new THREE.Color(0xb38453);
+const HEALTHY_LEAF = new THREE.Color(GREEN);
+const DRY_LEAF = new THREE.Color(0xb38453);
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
 const windowAlpha = (t, start, end, fi = 0.45, fo = 0.5) => smooth((t - start) / fi) * (1 - smooth((t - end) / fo));
@@ -245,7 +249,7 @@ flowGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 45);
 const flowMat = pointMaterial(6.1, 0);
 const featureFlow = new THREE.Points(flowGeo, flowMat); scene.add(featureFlow);
 
-// Three identical plant outcomes form a literal, easy-to-read pattern.
+// Two matching outcomes make the visible pattern explicit; causes arrive later.
 function makePlant(parent, { soilColor = SOIL, leafColor = GREEN } = {}) {
   const g = new THREE.Group(); parent.add(g);
   const pot = mesh(g, new THREE.CylinderGeometry(1.02, 0.77, 1.12, 12, 1, true), 0x8a573d, 0.96, false);
@@ -274,15 +278,14 @@ function makePlant(parent, { soilColor = SOIL, leafColor = GREEN } = {}) {
   return { group: g, pot, base, soil, stem, leaves, roots };
 }
 const patternPlants = [];
-for (const x of [-7.8, 0, 7.8]) {
+for (const x of [-6.1, 6.1]) {
   const p = makePlant(scene);
-  p.group.position.set(x, -3.05, -4.5 + (x === 0 ? 1.2 : 0));
-  p.group.scale.setScalar(0.70);
+  p.group.position.set(x, -3.05, -0.6);
+  p.group.scale.setScalar(0.82);
   patternPlants.push(p);
 }
-const patternRing = mesh(scene, new THREE.TorusGeometry(5.4, 0.07, 10, 96), CYAN, 0.7, true);
-patternRing.position.set(0, -0.75, -4.0); patternRing.rotation.x = 0.28;
 const patternTitle = addText(scene, 'PATTERNS ≠ CAUSES', { width: 24, size: 126, y: 6.45, z: -5.0, glow: '#4aaeff' });
+const visibleResult = addText(scene, 'SAME VISIBLE RESULT', { width: 12, size: 72, y: 0.20, z: 1.2, color: '#d9f8ff' });
 
 // A compact rain cloud and watering can create different causes for the same plant growth.
 function makeRainCloud(parent) {
@@ -311,66 +314,39 @@ function makeWaterCan(parent) {
   for (let i = 0; i < 6; i++) { const d = sphere(g, 0.08, CYAN, 0.94, true, 10); d.position.set(1.52 + i * 0.12, 0.62 - i * 0.16, 0.15); drops.push(d); }
   return { group: g, drops };
 }
-const rainCause = makeRainCloud(scene); rainCause.group.position.set(-7.1, 3.0, 0.5);
-const waterCause = makeWaterCan(scene); waterCause.group.position.set(7.0, 2.65, 0.5);
-const causePlants = [];
-for (const x of [-7.1, 7.0]) {
-  const p = makePlant(scene); p.group.position.set(x, -3.1, -0.3); p.group.scale.setScalar(0.66); causePlants.push(p);
-}
-const rainLabel = addText(scene, 'RAIN', { width: 4.8, size: 76, y: 5.25, z: 0.7, color: '#d9f4ff' }); rainLabel.position.x = -7.1;
-const waterLabel = addText(scene, 'WATERING', { width: 6.0, size: 76, y: 5.25, z: 0.7, color: '#d9f4ff' }); waterLabel.position.x = 7.0;
-const sameOutcome = addText(scene, 'SAME GROWTH · DIFFERENT CAUSE', { width: 25.5, size: 94, y: 6.55, z: -4.2, glow: '#5fe5ff' });
+const rainCause = makeRainCloud(scene); rainCause.group.position.set(-6.1, 2.75, 1.0);
+const waterCause = makeWaterCan(scene); waterCause.group.position.set(6.1, 2.65, 1.0);
+const rainLabel = addText(scene, 'RAIN', { width: 4.8, size: 160, y: 4.20, z: 1.0, color: '#d9f4ff' }); rainLabel.position.x = -6.1;
+const waterLabel = addText(scene, 'WATERING', { width: 6.0, size: 150, y: 4.20, z: 1.0, color: '#d9f4ff' }); waterLabel.position.x = 6.1;
+const sameOutcome = addText(scene, 'SAME RESULT · DIFFERENT CAUSES', { width: 27, size: 92, y: 6.45, z: -4.2, glow: '#5fe5ff' });
 
-// New, unfamiliar setup: model forecast is set against what actually happens.
-const experimentStage = mesh(scene, new THREE.CylinderGeometry(6.0, 6.3, 0.3, 64), 0x162b3b, 0.54, false);
-experimentStage.position.set(0, -4.08, -0.6); experimentStage.material.wireframe = true;
-const predictedPlant = makePlant(scene); predictedPlant.group.position.set(-4.25, -3.65, 1.0); predictedPlant.group.scale.setScalar(0.77);
-const observedPlant = makePlant(scene); observedPlant.group.position.set(4.25, -3.65, 1.0); observedPlant.group.scale.setScalar(0.77);
-const predictLabel = addText(scene, 'PREDICTED', { width: 8.8, size: 76, y: 2.3, z: 2.0, color: '#c8f8ff' }); predictLabel.position.x = -4.25;
-const actualLabel = addText(scene, 'OBSERVED', { width: 8.5, size: 76, y: 2.3, z: 2.0, color: '#ffd6bf', glow: '#ff8c6c' }); actualLabel.position.x = 4.25;
-const mismatch = addText(scene, '≠', { width: 2.6, size: 180, y: -0.3, z: 3.0, color: '#ff5870', glow: '#ff3854' });
-const unfamiliarTitle = addText(scene, 'UNFAMILIAR SITUATION', { width: 24, size: 118, y: 6.5, z: -4.0, glow: '#4aaeff' });
+// One plant stays in view through the full test so cause, prediction and outcome
+// all refer to the same subject instead of unexplained duplicate plants.
+const predictedPlant = makePlant(scene); predictedPlant.group.position.set(0, -3.0, 1.0); predictedPlant.group.scale.setScalar(0.96);
+const predictLabel = addText(scene, 'MODEL EXPECTS: HEALTHY', { width: 18, size: 78, y: 2.35, z: 2.2, color: '#c8f8ff' });
+const actualLabel = addText(scene, 'PREDICTED: HEALTHY', { width: 17, size: 76, y: 2.35, z: 2.2, color: '#ffd6bf', glow: '#ff8c6c' });
+const nextLabel = addText(scene, 'NEXT PREDICTION: WILT', { width: 19, size: 74, y: 2.35, z: 2.2, color: '#dcfff1', glow: '#51eab3' });
+const mismatch = new THREE.Group(); scene.add(mismatch);
+beam(mismatch, new THREE.Vector3(4.85, 0.65, 3.0), new THREE.Vector3(5.75, -0.25, 3.0), 0.13, RED, 0.96);
+beam(mismatch, new THREE.Vector3(4.85, -0.25, 3.0), new THREE.Vector3(5.75, 0.65, 3.0), 0.13, RED, 0.96);
+const unfamiliarTitle = addText(scene, 'A NEW CASE', { width: 19, size: 118, y: 6.5, z: -4.0, glow: '#4aaeff' });
 const predictTitle = addText(scene, 'PREDICT THE OUTCOME', { width: 23, size: 112, y: 6.5, z: -4.0, glow: '#4aaeff' });
-const hiddenTitle = addText(scene, 'HIDDEN: SOIL MOISTURE', { width: 25, size: 112, y: 6.5, z: -4.0, color: '#e7fbff', glow: '#64c9ff' });
-const updateTitle = addText(scene, 'UPDATE THE MODEL', { width: 21, size: 112, y: 6.5, z: -4.0, color: '#e7fbff', glow: '#66e8ba' });
-const contradictionTitle = addText(scene, 'PREDICTION ≠ REALITY', { width: 25, size: 108, y: 6.5, z: -4.0, color: '#ffe5de', glow: '#ff596d' });
+const hiddenTitle = addText(scene, 'HIDDEN VARIABLE: DRY SOIL', { width: 26, size: 100, y: 6.5, z: -4.0, color: '#e7fbff', glow: '#64c9ff' });
+const updateTitle = addText(scene, 'THE MODEL MUST UPDATE', { width: 24, size: 104, y: 6.5, z: -4.0, color: '#e7fbff', glow: '#66e8ba' });
+const contradictionTitle = addText(scene, 'REALITY: THE PLANT WILTS', { width: 26, size: 100, y: 6.5, z: -4.0, color: '#ffe5de', glow: '#ff596d' });
+const matchedTitle = addText(scene, 'UPDATED RULE: DRY SOIL → WILT', { width: 28, size: 88, y: 6.5, z: -4.0, color: '#dcfff1', glow: '#51eab3' });
 
 // Soil cutaway and moisture meter expose the previously hidden variable.
 const cutaway = new THREE.Group(); scene.add(cutaway);
-const earthPanel = mesh(cutaway, new THREE.BoxGeometry(5.1, 1.35, 0.35), SOIL, 0.98, false); earthPanel.position.set(4.25, -3.65, 2.08);
-const earthFront = mesh(cutaway, new THREE.BoxGeometry(4.8, 0.12, 0.08), DRY, 0.94, false); earthFront.position.set(4.25, -4.16, 2.30);
-const moistureBack = mesh(cutaway, new THREE.BoxGeometry(0.38, 1.7, 0.24), 0x172635, 0.94, false); moistureBack.position.set(7.45, -3.20, 2.26);
-const moistureFill = mesh(cutaway, new THREE.BoxGeometry(0.24, 1.25, 0.14), 0x3daaff, 0.98, true); moistureFill.position.set(7.45, -3.75, 2.42); moistureFill.scale.y = 0.08;
-const moistureLabel = addText(cutaway, 'SOIL MOISTURE', { width: 6.8, size: 58, y: -4.65, z: 2.55, color: '#d8f2ff' }); moistureLabel.position.x = 6.15;
-const rootsReveal = new THREE.Group(); scene.add(rootsReveal);
-for (let i = 0; i < 9; i++) {
-  const a = (i / 9) * Math.PI * 2;
-  const end = new THREE.Vector3(4.25 + Math.cos(a) * (0.7 + (i % 3) * 0.22), -3.70 - (i % 4) * 0.22, 2.25 + Math.sin(a) * 0.12);
-  beam(rootsReveal, new THREE.Vector3(4.25, -2.75, 2.18), end, 0.045, 0xb99a72, 0.88);
-}
+const earthPanel = mesh(cutaway, new THREE.BoxGeometry(4.8, 1.05, 0.35), 0x65442f, 0.98, false); earthPanel.position.set(0, -3.78, 2.08);
+const earthFront = mesh(cutaway, new THREE.BoxGeometry(4.55, 0.12, 0.08), DRY, 0.94, false); earthFront.position.set(0, -4.21, 2.30);
+const moistureBack = mesh(cutaway, new THREE.BoxGeometry(0.48, 1.55, 0.24), 0x172635, 0.94, false); moistureBack.position.set(2.95, -3.72, 2.26);
+const moistureFill = mesh(cutaway, new THREE.BoxGeometry(0.34, 1.20, 0.14), 0x3daaff, 0.98, true); moistureFill.position.set(2.95, -4.12, 2.42); moistureFill.scale.y = 0.12;
+const moistureLabel = addText(cutaway, 'LOW SOIL MOISTURE', { width: 9.2, size: 82, y: -4.82, z: 2.55, color: '#d8f2ff' }); moistureLabel.position.x = 1.25;
 
-// Causal paths are thick and spatial: both water sources change soil moisture,
-// which changes the plant. This replaces a misleading direct correlation.
-const causalGraph = new THREE.Group(); scene.add(causalGraph);
-const rainToSoil = beam(causalGraph, new THREE.Vector3(-7.0, 2.6, -2.0), new THREE.Vector3(0, -3.25, -1.6), 0.085, CYAN, 0.82);
-const waterToSoil = beam(causalGraph, new THREE.Vector3(7.0, 2.35, -2.0), new THREE.Vector3(0, -3.25, -1.6), 0.085, BLUE, 0.82);
-const soilToPlant = beam(causalGraph, new THREE.Vector3(0, -3.2, -1.4), new THREE.Vector3(0, 0.8, -1.0), 0.09, GREEN, 0.9);
-const causalPulses = [];
-for (let i = 0; i < 3; i++) {
-  const p = sphere(causalGraph, 0.18, [CYAN, BLUE, GREEN][i], 0.98, true, 14);
-  causalPulses.push(p);
-}
-const graphNodeRain = sphere(causalGraph, 0.42, CYAN, 0.96, true); graphNodeRain.position.set(-7.0, 2.6, -2.0);
-const graphNodeWater = sphere(causalGraph, 0.42, BLUE, 0.96, true); graphNodeWater.position.set(7.0, 2.35, -2.0);
-const graphNodeSoil = sphere(causalGraph, 0.62, 0x63b8ff, 0.96, true); graphNodeSoil.position.set(0, -3.25, -1.6);
-const rainGraphLabel = addText(causalGraph, 'RAIN', { width: 3.5, size: 54, y: 3.35, z: -1.6 }); rainGraphLabel.position.x = -7.0;
-const waterGraphLabel = addText(causalGraph, 'WATER', { width: 4.2, size: 54, y: 3.35, z: -1.6 }); waterGraphLabel.position.x = 7.0;
-
-// After correction, a fresh test shows the predicted and observed result aligned.
-const testExpected = makePlant(scene); testExpected.group.position.set(-3.65, -3.65, -5.0); testExpected.group.scale.setScalar(0.57);
-const testObserved = makePlant(scene); testObserved.group.position.set(3.65, -3.65, -5.0); testObserved.group.scale.setScalar(0.57);
-const matchedCheck = addText(scene, '✓', { width: 2.6, size: 170, y: -0.4, z: 1.6, color: '#8dffd0', glow: '#41f0ad' });
-const matchedTitle = addText(scene, 'UPDATED MODEL · BETTER PREDICTION', { width: 27, size: 92, y: 6.5, z: -4.0, color: '#dcfff1', glow: '#51eab3' });
+const matchedCheck = new THREE.Group(); scene.add(matchedCheck);
+beam(matchedCheck, new THREE.Vector3(4.78, 0.12, 3.0), new THREE.Vector3(5.10, -0.20, 3.0), 0.14, GREEN, 0.96);
+beam(matchedCheck, new THREE.Vector3(5.10, -0.20, 3.0), new THREE.Vector3(5.82, 0.62, 3.0), 0.14, GREEN, 0.96);
 
 // Exit particles form the next scene's starting field without a hard cut.
 const OUT_COUNT = 420;
@@ -413,7 +389,7 @@ function updateIncoming(t) {
 }
 function updateFlow(t) {
   const p = flowGeo.attributes.position.array;
-  const active = windowAlpha(t, 7.9, 10.45, 0.45, 0.55);
+  const active = windowAlpha(t, 7.9, 9.72, 0.45, 0.32);
   const target = new THREE.Vector3(0, -0.75, -3.8);
   for (let i = 0; i < FLOW_COUNT; i++) {
     const d = flowData[i], j = i * 3, sx = inputXs[d.slot], phase = (d.phase + t * 0.34) % 1;
@@ -425,30 +401,26 @@ function updateFlow(t) {
   flowGeo.attributes.position.needsUpdate = true;
   flowMat.uniforms.uOpacity.value = 0.78 * active;
 }
-function updatePlants(plants, alpha, { wilt = false, dry = false, showRoots = false } = {}) {
+function updatePlants(plants, alpha, { wilt = false, dry = false, showRoots = false, time = 0 } = {}) {
+  const wiltAmount = typeof wilt === 'number' ? clamp(wilt) : (wilt ? 1 : 0);
   for (const plant of plants) {
     setGroupAlpha(plant.group, alpha);
     plant.roots.visible = showRoots && alpha > 0.01;
-    plant.stem.rotation.z = wilt ? -0.38 : 0.04 * Math.sin(alpha * 4);
-    plant.stem.material.color.setHex(wilt ? DRY : 0x65cb83);
+    const breeze = Math.sin(time * 1.5) * 0.035 * (1 - wiltAmount);
+    plant.group.rotation.y = 0.035 * Math.sin(time * 0.55);
+    plant.stem.rotation.z = THREE.MathUtils.lerp(0.04 * Math.sin(time * 1.5) + breeze, -0.50, wiltAmount);
+    plant.stem.material.color.copy(HEALTHY_STEM).lerp(DRY_STEM, wiltAmount);
     plant.soil.material.color.setHex(dry ? DRY : SOIL);
     for (let i = 0; i < plant.leaves.length; i++) {
       const leaf = plant.leaves[i];
-      leaf.material.color.setHex(wilt ? 0xb38453 : GREEN);
-      leaf.rotation.z = wilt ? (i % 2 ? 0.75 : -0.72) : (i % 2 ? 0.46 : -0.5);
+      leaf.material.color.copy(HEALTHY_LEAF).lerp(DRY_LEAF, wiltAmount);
+      const healthyAngle = (i % 2 ? 0.46 : -0.50) + breeze * (i % 2 ? 1 : -1);
+      leaf.rotation.z = THREE.MathUtils.lerp(healthyAngle, i % 2 ? 0.90 : -0.86, wiltAmount);
     }
   }
 }
-function updateCausalPulses(t) {
-  const phase = ((t - 26.75) * 0.9) % 1;
-  const a = new THREE.Vector3(-7.0, 2.6, -2.0), b = new THREE.Vector3(0, -3.25, -1.6), c = new THREE.Vector3(0, 0.8, -1.0);
-  causalPulses[0].position.copy(a).lerp(b, phase);
-  causalPulses[1].position.copy(new THREE.Vector3(7.0, 2.35, -2.0)).lerp(b, (phase + 0.30) % 1);
-  causalPulses[2].position.copy(b).lerp(c, (phase + 0.58) % 1);
-  causalGraph.rotation.y = 0.025 * Math.sin(t * 0.8);
-}
 function updateExit(t) {
-  const start = 30.35, spread = smooth((t - start) / 0.82), p = outGeo.attributes.position.array;
+  const start = 31.06, spread = smooth((t - start) / 0.55), p = outGeo.attributes.position.array;
   for (let i = 0; i < OUT_COUNT; i++) {
     const d = outData[i], j = i * 3;
     p[j] = THREE.MathUtils.lerp(d.source.x, d.end.x, spread) + Math.sin(t * 1.3 + d.phase) * 0.16 * spread;
@@ -456,7 +428,7 @@ function updateExit(t) {
     p[j + 2] = THREE.MathUtils.lerp(d.source.z, d.end.z, spread);
   }
   outGeo.attributes.position.needsUpdate = true;
-  outMat.uniforms.uOpacity.value = 0.82 * smooth((t - start) / 0.18);
+  outMat.uniforms.uOpacity.value = 0.62 * smooth((t - start) / 0.14);
 }
 function updateCamera(t) {
   if (t < 4.8) {
@@ -491,59 +463,48 @@ function renderFrame(frame) {
   updateFlow(t);
 
   for (const input of inputs) {
-    const end = 10.05;
-    const alpha = windowAlpha(t, input.start, end, 0.34, 0.82);
+    const end = 9.62;
+    const alpha = windowAlpha(t, input.start, end, 0.34, 0.32);
     setGroupAlpha(input.group, alpha);
     setTextAlpha(input.label, alpha);
   }
   if (videoProgress) videoProgress.scale.x = 0.10 + 0.86 * ((t * 0.22) % 1);
 
-  const patternA = windowAlpha(t, 9.65, 14.60, 0.58, 0.40);
-  updatePlants(patternPlants, patternA);
-  patternRing.material.opacity = 0.72 * patternA * (0.75 + 0.25 * Math.sin(t * 1.8));
-  patternRing.rotation.z = t * 0.18;
-  setTextAlpha(patternTitle, windowAlpha(t, 10.10, 14.70, 0.30, 0.45));
+  const patternA = windowAlpha(t, 10.0, 16.78, 0.42, 0.26);
+  updatePlants(patternPlants, patternA, { time: t });
+  setTextAlpha(patternTitle, windowAlpha(t, 10.0, 13.72, 0.22, 0.25));
+  setTextAlpha(visibleResult, windowAlpha(t, 10.18, 13.72, 0.28, 0.25));
 
-  const causeA = windowAlpha(t, 14.88, 16.55, 0.45, 0.40);
+  const causeA = windowAlpha(t, 13.82, 16.78, 0.44, 0.24);
   setGroupAlpha(rainCause.group, causeA); setGroupAlpha(waterCause.group, causeA);
-  updatePlants(causePlants, causeA);
   for (let i = 0; i < rainCause.drops.length; i++) rainCause.drops[i].position.y = -0.58 - ((t * 1.55 + i * 0.16) % 1.2);
   for (let i = 0; i < waterCause.drops.length; i++) waterCause.drops[i].position.y = 0.58 - ((t * 1.35 + i * 0.18) % 1.0);
   setTextAlpha(rainLabel, causeA); setTextAlpha(waterLabel, causeA);
-  setTextAlpha(sameOutcome, windowAlpha(t, 15.45, 16.52, 0.4, 0.42));
+  setTextAlpha(sameOutcome, windowAlpha(t, 13.92, 16.78, 0.34, 0.24));
 
-  const unfamiliarA = windowAlpha(t, 17.08, 21.10, 0.48, 0.48);
-  experimentStage.material.opacity = 0.54 * unfamiliarA;
-  setTextAlpha(unfamiliarTitle, windowAlpha(t, 17.18, 20.48, 0.38, 0.52));
+  const previewPlantA = 0.92 * windowAlpha(t, 17.08, 21.42, 0.32, 0.38);
+  const testA = windowAlpha(t, 21.05, 31.10, 0.42, 0.25);
+  const plantA = Math.max(previewPlantA, testA);
+  updatePlants([predictedPlant], plantA, { wilt: smooth((t - 28.30) / 0.50), dry: t >= 24.20, time: t });
+  setTextAlpha(unfamiliarTitle, windowAlpha(t, 17.08, 20.65, 0.22, 0.34));
+  setTextAlpha(predictTitle, windowAlpha(t, 20.98, 24.18, 0.22, 0.32));
+  setTextAlpha(predictLabel, windowAlpha(t, 21.00, 28.30, 0.22, 0.16));
+  setTextAlpha(hiddenTitle, windowAlpha(t, 24.20, 26.72, 0.34, 0.30));
+  setTextAlpha(updateTitle, windowAlpha(t, 26.78, 28.30, 0.32, 0.14));
+  setTextAlpha(contradictionTitle, windowAlpha(t, 28.45, 30.08, 0.16, 0.24));
+  setTextAlpha(actualLabel, windowAlpha(t, 28.50, 30.08, 0.24, 0.24));
+  setGroupAlpha(mismatch, windowAlpha(t, 28.50, 30.08, 0.22, 0.22));
 
-  const forecastA = windowAlpha(t, 21.05, 30.45, 0.45, 0.35);
-  const previewPlantA = 0.68 * windowAlpha(t, 17.08, 21.60, 0.48, 0.45);
-  const predictionMove = smooth((t - 20.00) / 1.05);
-  predictedPlant.group.position.x = -4.25 * predictionMove;
-  predictLabel.position.x = -4.25 * predictionMove;
-  updatePlants([predictedPlant], Math.max(previewPlantA, forecastA), { wilt: false, dry: false });
-  updatePlants([observedPlant], windowAlpha(t, 24.82, 30.45, 0.30, 0.35), { wilt: true, dry: true, showRoots: t >= 24.92 });
-  setTextAlpha(predictLabel, forecastA);
-  setTextAlpha(actualLabel, windowAlpha(t, 24.88, 30.45, 0.32, 0.35));
-  setTextAlpha(predictTitle, windowAlpha(t, 21.55, 24.1, 0.36, 0.4));
-  setTextAlpha(mismatch, windowAlpha(t, 25.30, 29.9, 0.24, 0.35));
+  const hiddenA = windowAlpha(t, 24.20, 30.98, 0.34, 0.18);
+  setGroupAlpha(cutaway, hiddenA);
+  cutaway.position.y = -0.45 * (1 - smooth((t - 24.20) / 0.65));
+  moistureFill.scale.y = 0.09;
+  moistureFill.position.y = -4.52 + moistureFill.scale.y * 0.60;
 
-  const hiddenA = windowAlpha(t, 24.75, 30.45, 0.35, 0.35);
-  setGroupAlpha(cutaway, hiddenA); setGroupAlpha(rootsReveal, hiddenA);
-  moistureFill.scale.y = 0.08 + 0.31 * smooth((t - 26.9) / 0.75);
-  moistureFill.position.y = -4.17 + moistureFill.scale.y * 0.61;
-  setTextAlpha(hiddenTitle, windowAlpha(t, 24.92, 26.95, 0.34, 0.45));
-
-  const graphA = windowAlpha(t, 26.75, 30.45, 0.45, 0.35);
-  setGroupAlpha(causalGraph, graphA);
-  updateCausalPulses(t);
-  setTextAlpha(updateTitle, windowAlpha(t, 27.0, 28.48, 0.34, 0.38));
-  setTextAlpha(contradictionTitle, windowAlpha(t, 28.48, 30.38, 0.30, 0.35));
-
-  const matchA = windowAlpha(t, 30.34, 31.26, 0.16, 0.20);
-  updatePlants([testExpected, testObserved], matchA);
-  setTextAlpha(matchedCheck, matchA);
-  setTextAlpha(matchedTitle, windowAlpha(t, 30.48, 31.26, 0.16, 0.14));
+  const matchA = windowAlpha(t, 30.10, 31.10, 0.24, 0.16);
+  setGroupAlpha(matchedCheck, matchA);
+  setTextAlpha(nextLabel, matchA);
+  setTextAlpha(matchedTitle, matchA);
 
   updateExit(t);
 
