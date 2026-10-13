@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,33 +9,41 @@
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
+      width: 100%;
+      min-height: 100%;
       background: #010308;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      color: #eaffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       user-select: none;
     }
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: clamp(8px, 2vh, 20px) 12px;
+    }
+    #player-shell {
+      width: min(100%, 1600px, calc((100dvh - 172px) * 16 / 9));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: auto;
+    }
     #stage-wrapper {
       position: relative;
-      width: 100vw;
-      height: 56.25vw; /* 16:9 */
-      max-height: 100vh;
-      max-width: 177.78vh; /* 16:9 */
+      width: 100%;
+      aspect-ratio: 16 / 9;
       background: #02050c;
-      box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.75);
       overflow: hidden;
     }
     #canvas-container {
-      width: 100%;
-      height: 100%;
       position: absolute;
-      top: 0;
-      left: 0;
+      inset: 0;
       z-index: 1;
     }
     #canvas-container canvas {
@@ -44,100 +52,129 @@
       display: block;
     }
     #ui-hud {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      background: rgba(8, 14, 28, 0.85);
-      border: 1px solid rgba(90, 232, 255, 0.35);
-      backdrop-filter: blur(12px);
-      border-radius: 12px;
-      padding: 10px 18px;
+      position: static;
+      z-index: 2;
+      width: 100%;
+      max-width: none;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      width: calc(100% - 48px);
-      max-width: 860px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(90, 232, 255, 0.15);
-      transition: opacity 0.3s ease;
+      gap: 9px;
+      padding: 10px 14px 11px;
+      background: rgba(8, 14, 28, 0.96);
+      border: 1px solid rgba(90, 232, 255, 0.28);
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 16px rgba(90, 232, 255, 0.08);
     }
     .hud-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
+      min-width: 0;
     }
     .hud-btn {
+      flex: 0 0 auto;
+      min-height: 34px;
+      padding: 6px 13px;
       background: rgba(90, 232, 255, 0.12);
       border: 1px solid rgba(90, 232, 255, 0.4);
-      color: #eaffff;
-      padding: 6px 14px;
       border-radius: 6px;
+      color: #eaffff;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .hud-btn:hover {
       background: rgba(90, 232, 255, 0.25);
       border-color: #5ae8ff;
-      box-shadow: 0 0 10px rgba(90, 232, 255, 0.4);
+      box-shadow: 0 0 10px rgba(90, 232, 255, 0.25);
+    }
+    .hud-btn:focus-visible, .nav-pill:focus-visible, #timeline-slider:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
     }
     #time-display {
+      flex: 0 0 auto;
+      min-width: 100px;
       color: #5ae8ff;
-      font-family: monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 13px;
-      min-width: 95px;
-      font-weight: bold;
-    }
-    #audio-status {
-      color: #b0cddb;
-      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
       text-align: center;
-      min-height: 14px;
     }
-    #audio-track { display: none; }
     #timeline-slider {
-      flex: 1;
+      flex: 1 1 auto;
+      min-width: 50px;
+      height: 6px;
       accent-color: #5ae8ff;
       cursor: pointer;
-      height: 6px;
     }
+    #speed-btn { min-width: 60px; }
+    #hud-toggle-btn {
+      min-width: 106px;
+      color: #bdeeff;
+      background: rgba(255, 255, 255, 0.045);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    #secondary-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #ui-hud.chapters-collapsed #secondary-controls { display: none; }
+    #audio-status {
+      min-height: 14px;
+      color: #b0cddb;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    #audio-track { display: none; }
     .nav-pills {
       display: flex;
+      justify-content: flex-start;
       gap: 6px;
-      flex-wrap: wrap;
-      justify-content: center;
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 2px 1px 4px;
+      scrollbar-color: rgba(90, 232, 255, 0.35) transparent;
+      scrollbar-width: thin;
     }
     .nav-pill {
-      background: rgba(255, 255, 255, 0.05);
+      flex: 0 0 auto;
+      padding: 5px 10px;
       border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
       color: #b0cddb;
-      padding: 3px 9px;
-      border-radius: 12px;
       font-size: 11px;
+      white-space: nowrap;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
     .nav-pill:hover, .nav-pill.active {
-      background: rgba(90, 232, 255, 0.2);
       border-color: #5ae8ff;
+      background: rgba(90, 232, 255, 0.17);
       color: #ffffff;
-      box-shadow: 0 0 8px rgba(90, 232, 255, 0.3);
     }
-    #hud-toggle-btn {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      z-index: 20;
-      background: rgba(8, 14, 28, 0.7);
-      border: 1px solid rgba(90, 232, 255, 0.3);
-      color: #5ae8ff;
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
+    @media (max-width: 680px) {
+      body { padding: 8px; }
+      #player-shell { width: min(100%, calc((100dvh - 164px) * 16 / 9)); gap: 8px; }
+      #ui-hud { padding: 9px 9px 8px; gap: 7px; }
+      .hud-row { gap: 6px; }
+      .hud-btn { min-height: 32px; padding: 5px 9px; font-size: 12px; }
+      #time-display { min-width: 80px; font-size: 11px; }
+      #speed-btn { min-width: 50px; }
+      #hud-toggle-btn { min-width: 84px; }
+      .nav-pill { padding: 5px 9px; }
+    }
+    @media (max-width: 380px) {
+      #time-display { min-width: 72px; font-size: 10px; }
+      .hud-row { gap: 4px; }
+      .hud-btn { padding-inline: 7px; }
+      #hud-toggle-btn { min-width: 76px; }
     }
   </style>
   <script type="importmap">
@@ -150,32 +187,36 @@
   </script>
 </head>
 <body>
-  <div id="stage-wrapper">
-    <div id="canvas-container"></div>
+  <main id="player-shell">
+    <div id="stage-wrapper" aria-label="16:9 animation preview">
+      <div id="canvas-container"></div>
+    </div>
+    <section id="ui-hud" aria-label="Video player controls">
+      <div class="hud-row" id="transport-row">
+        <button id="play-btn" class="hud-btn" type="button" aria-label="Play">Play</button>
+        <span id="time-display" aria-live="off">00:00 / 03:30</span>
+        <input type="range" id="timeline-slider" min="0" max="210" step="0.05" value="0" aria-label="Playback position" />
+        <button id="speed-btn" class="hud-btn" type="button" aria-label="Playback speed">1.0x</button>
+        <button id="hud-toggle-btn" class="hud-btn" type="button" aria-expanded="true" aria-controls="secondary-controls">Hide chapters</button>
+      </div>
+      <div id="secondary-controls">
+        <div id="audio-status" role="status">Audio is ready · press Play to start synced preview</div>
+        <nav class="nav-pills" aria-label="Video sections">
+          <button class="nav-pill" type="button" data-time="0">0:00 Opening</button>
+          <button class="nav-pill" type="button" data-time="22">0:22 Decision Tree</button>
+          <button class="nav-pill" type="button" data-time="55">0:55 Pattern vs Cause</button>
+          <button class="nav-pill" type="button" data-time="85">1:25 Learning Loop</button>
+          <button class="nav-pill" type="button" data-time="115">1:55 Compute Limits</button>
+          <button class="nav-pill" type="button" data-time="145">2:25 Capabilities</button>
+          <button class="nav-pill" type="button" data-time="180">3:00 Neural Sphere</button>
+          <button class="nav-pill" type="button" data-time="198">3:18 Brand Logo</button>
+        </nav>
+      </div>
+    </section>
     <audio id="audio-track" preload="metadata">
       <source src="./assets/audio/final_mix.mp3" type="audio/mpeg" />
     </audio>
-    <button id="hud-toggle-btn">Toggle Controls (H)</button>
-    <div id="ui-hud">
-      <div class="hud-row">
-        <button id="play-btn" class="hud-btn">Play</button>
-        <span id="time-display">00:00 / 03:30</span>
-        <input type="range" id="timeline-slider" min="0" max="210" step="0.05" value="0" />
-        <button id="speed-btn" class="hud-btn">1.0x</button>
-      </div>
-      <div id="audio-status">Audio is ready · press Play to start synced preview</div>
-      <div class="hud-row nav-pills">
-        <span class="nav-pill" data-time="0">0:00 Opening</span>
-        <span class="nav-pill" data-time="22">0:22 Decision Tree</span>
-        <span class="nav-pill" data-time="55">0:55 Pattern vs Cause</span>
-        <span class="nav-pill" data-time="85">1:25 Learning Loop</span>
-        <span class="nav-pill" data-time="115">1:55 Compute Limits</span>
-        <span class="nav-pill" data-time="145">2:25 Capabilities</span>
-        <span class="nav-pill" data-time="180">3:00 Neural Sphere</span>
-        <span class="nav-pill" data-time="198">3:18 Brand Logo</span>
-      </div>
-    </div>
-  </div>
+  </main>
 
   <script type="module" src="./src/v4_particle_documentary.js"></script>
   <script>
@@ -189,7 +230,6 @@
       const pills = document.querySelectorAll('.nav-pill');
 
       let isPlaying = false;
-      let playbackSpeed = 1.0;
       const speeds = [0.5, 1.0, 1.5, 2.0];
       let speedIdx = 1;
 
@@ -200,9 +240,7 @@
       }
 
       window.updateUIPlayback = function(time, duration) {
-        if (!document.activeElement || document.activeElement !== slider) {
-          slider.value = time;
-        }
+        if (document.activeElement !== slider) slider.value = time;
         timeDisplay.textContent = `${fmtTime(time)} / ${fmtTime(duration)}`;
         pills.forEach(p => {
           const t = parseFloat(p.dataset.time);
@@ -214,6 +252,7 @@
       window.updateUIPlaybackState = function(playing, message) {
         isPlaying = playing;
         playBtn.textContent = playing ? 'Pause' : 'Play';
+        playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
         document.getElementById('audio-status').textContent = message;
       };
 
@@ -231,9 +270,9 @@
 
       speedBtn.addEventListener('click', () => {
         speedIdx = (speedIdx + 1) % speeds.length;
-        playbackSpeed = speeds[speedIdx];
-        speedBtn.textContent = `${playbackSpeed}x`;
-        if (window.__setPlaybackSpeed) window.__setPlaybackSpeed(playbackSpeed);
+        const speed = speeds[speedIdx];
+        speedBtn.textContent = `${speed.toFixed(1)}x`;
+        if (window.__setPlaybackSpeed) window.__setPlaybackSpeed(speed);
       });
 
       pills.forEach(pill => {
@@ -244,18 +283,19 @@
         });
       });
 
-      hudToggle.addEventListener('click', () => {
-        const isHidden = hud.style.opacity === '0';
-        hud.style.opacity = isHidden ? '1' : '0';
-        hud.style.pointerEvents = isHidden ? 'all' : 'none';
-      });
+      function toggleChapters() {
+        const collapsed = hud.classList.toggle('chapters-collapsed');
+        hudToggle.textContent = collapsed ? 'Show chapters' : 'Hide chapters';
+        hudToggle.setAttribute('aria-expanded', String(!collapsed));
+      }
+      hudToggle.addEventListener('click', toggleChapters);
 
       window.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && !['BUTTON', 'INPUT'].includes(document.activeElement?.tagName)) {
           e.preventDefault();
           playBtn.click();
         } else if (e.key === 'h' || e.key === 'H') {
-          hudToggle.click();
+          toggleChapters();
         }
       });
     });
