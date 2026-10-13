@@ -1,8 +1,12 @@
 import * as THREE from '../assets/vendor/three.module.js';
 
 const FPS = 24;
-const CUT = 22.2;
-const DURATION = 50.76;
+const CUT_1 = 22.2;
+const CUT_2 = 50.76;
+const DURATION = 82.0;
+const CUT_1_FRAME = Math.round(CUT_1 * FPS);
+const CUT_2_FRAME = Math.round(CUT_2 * FPS);
+const DURATION_FRAME = Math.round(DURATION * FPS);
 const container = document.getElementById('canvas-container');
 if (!container) throw new Error('V5 preview canvas container is missing.');
 
@@ -26,23 +30,34 @@ window.__V5_SHARED_RENDERER = renderer;
 
 let opening;
 let reasoning;
-let handoffReady = false;
+let patterns;
+let openingHandoffReady = false;
+let reasoningHandoffReady = false;
 let currentTime = 0;
 
 function renderAt(time) {
   const seconds = Math.max(0, Math.min(DURATION, Number(time) || 0));
+  const frame = Math.max(0, Math.min(DURATION_FRAME, Math.round(seconds * FPS)));
   currentTime = seconds;
   window.__playerTime = seconds;
-  if (seconds < CUT) {
-    opening.renderFrame(Math.round(seconds * FPS));
+  if (frame < CUT_1_FRAME) {
+    opening.renderFrame(frame);
   } else {
-    // Render the final opening frame once to snapshot its exact particle,
-    // star-field and camera state; the next scene inherits that same state.
-    if (!handoffReady) {
-      opening.renderFrame(Math.round(CUT * FPS));
-      handoffReady = true;
+    if (!openingHandoffReady) {
+      opening.renderFrame(CUT_1_FRAME);
+      openingHandoffReady = true;
     }
-    reasoning.renderFrame(Math.round((seconds - CUT) * FPS));
+    if (frame < CUT_2_FRAME) {
+      reasoning.renderFrame(frame - CUT_1_FRAME);
+    } else {
+      // Snapshot Task 2's exact last particle field, camera and star rotation
+      // before Task 3 renders its first frame on the same shared WebGL canvas.
+      if (!reasoningHandoffReady) {
+        reasoning.renderFrame(CUT_2_FRAME - CUT_1_FRAME);
+        reasoningHandoffReady = true;
+      }
+      patterns.renderFrame(frame - CUT_2_FRAME);
+    }
   }
   window.__sceneTime = seconds;
 }
@@ -51,9 +66,10 @@ function resize() {
   const width = Math.max(1, container.clientWidth || window.innerWidth);
   const height = Math.max(1, container.clientHeight || Math.round(width * 9 / 16));
   renderer.setSize(width, height, false);
-  if (opening && reasoning) {
+  if (opening && reasoning && patterns) {
     opening.resize();
     reasoning.resize();
+    patterns.resize();
     renderAt(currentTime);
   }
 }
@@ -61,6 +77,7 @@ function resize() {
 try {
   opening = await import('./v5_opening_preview.js');
   reasoning = await import('./v5_reasoning_preview.js');
+  patterns = await import('./v5_patterns_preview.js');
   window.renderFrame = frame => renderAt(Math.max(0, Number(frame) || 0) / FPS);
   window.addEventListener('resize', resize);
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(container);

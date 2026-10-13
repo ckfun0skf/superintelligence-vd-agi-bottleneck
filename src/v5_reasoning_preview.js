@@ -352,8 +352,9 @@ const exitColors = new Float32Array(EXIT_COUNT * 3);
 for (let i = 0; i < EXIT_COUNT; i++) {
   const source = nodePositions[Math.floor(random() * nodePositions.length)].clone();
   source.add(new THREE.Vector3(rr(-0.28, 0.28), rr(-0.28, 0.28), rr(-0.28, 0.28)));
-  const direction = new THREE.Vector3(rr(-1, 1), rr(-0.7, 0.7), rr(-1, 1)).normalize();
-  const end = source.clone().addScaledVector(direction, rr(10, 23));
+  // Keep the final dispersed field inside the inherited camera frustum so
+  // Task 3 can visibly take over these exact particles without a blank cut.
+  const end = new THREE.Vector3(rr(-9, 9), rr(-5, 5), rr(-6, 8));
   const color = new THREE.Color([CYAN, BLUE, GOLD][i % 3]);
   exitData.push({ source, end, phase: rr(0, Math.PI * 2) });
   exitColors.set([color.r, color.g, color.b], i * 3);
@@ -400,6 +401,16 @@ function renderFrame(frame) {
   stars.rotation.y = t * 0.002;
   renderer.render(scene, camera);
   window.__sceneTime = t;
+  if (t >= DURATION - 1 / FPS) {
+    window.__V5_REASONING_EXIT_FIELD = {
+      count: EXIT_COUNT,
+      positions: new Float32Array(exitPositions),
+      colors: new Float32Array(exitColors),
+      cameraPosition: camera.position.clone(),
+      cameraTarget: new THREE.Vector3(0, 0.25, 0),
+      starRotationY: stars.rotation.y,
+    };
+  }
 }
 function resize() {
   const w = Math.max(1, host.clientWidth), h = Math.max(1, host.clientHeight);
