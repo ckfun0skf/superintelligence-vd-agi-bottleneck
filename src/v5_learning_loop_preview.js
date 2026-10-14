@@ -120,11 +120,17 @@ box(rig, 0, -3.85, 0, 0x08131d, [14.0, 0.18, 5.6], 0.9, false);
 const rampPivot = group(rig, 'adjustable ramp'); rampPivot.position.set(-4.5, 0.72, 0.2);
 const rampDeck = box(rampPivot, 3.62, 0, 0, 0x315a77, [7.25, 0.28, 1.65], 0.98, false); rampDeck.material.color.setHex(0x23445c);
 const rampTop = box(rampPivot, 3.62, 0.18, 0, 0x63dfff, [7.05, 0.07, 1.34], 0.9, true);
-for (const side of [-0.78, 0.78]) { const rail = box(rampPivot, 3.62, 0.38, side, CYAN, [7.18, 0.16, 0.11], 0.88, true); rail.rotation.z = 0; }
+for (const side of [-0.78, 0.78]) { const rail = box(rampPivot, 3.62, 0.37, side, side > 0 ? CYAN : 0x396078, [7.18, 0.34, 0.14], 0.9, side > 0); rail.rotation.z = 0; }
 rampPivot.rotation.z = -0.22;
-const startMarker = sphere(rig, 0.18, ICE, 0.9, true); startMarker.position.set(-4.2, 1.28, 0.48);
+const startMarker = box(rig, -5.12, 1.22, 0.45, GOLD, [0.16, 0.92, 1.72], 0.9, false);
 const targetRing = mesh(rig, new THREE.TorusGeometry(0.58, 0.13, 12, 48), GREEN, 0.9, true); targetRing.rotation.x = 0.08;
-const targetCore = sphere(rig, 0.12, GREEN, 0.86, true); const targetFlag = box(rig, 0, 0, 0, GREEN, [0.12, 1.0, 0.12], 0.75, true);
+const targetCore = sphere(rig, 0.12, GREEN, 0.86, true);
+const targetPost = box(rig, 0, 0, 0, 0x396078, [0.16, 1.28, 0.16], 0.88, false);
+const targetPostFar = box(rig, 0, 0, 0, 0x396078, [0.16, 1.28, 0.16], 0.88, false);
+const targetFlag = box(rig, 0, 0, 0, GREEN, [1.72, 0.16, 0.16], 0.9, true);
+const startLabel = text(rig, 'START', { width: 2.5, size: 88, color: '#ffe0a4', glow: '#ffcf72', x: -5.0, y: 2.05, z: 1.2 });
+const goalLabel = text(rig, 'GOAL', { width: 2.7, size: 90, color: '#c4ffe0', glow: '#74e7ad', x: 1.5, y: 1.55, z: 1.2 });
+const trackLabel = text(rig, 'MARBLE RAMP TEST', { width: 6.2, size: 94, color: '#d9f8ff', glow: '#55e5ff', x: 0, y: -2.65, z: 2.9 });
 const marble = group(rig, 'test marble'); const marbleCore = sphere(marble, 0.64, 0xf6fbff, 0.98, true, 28); sphere(marble, 0.90, CYAN, 0.16, true, 24);
 const expectedDots = [];
 for (let i = 0; i < 14; i++) { const d = sphere(rig, 0.085, CYAN, 0.68, true, 12); expectedDots.push(d); }
@@ -132,25 +138,37 @@ const actualDots = [];
 for (let i = 0; i < 8; i++) { const d = sphere(rig, 0.075, GOLD, 0.0, true, 12); actualDots.push(d); }
 const failX = group(rig, 'missed target');
 for (const angle of [Math.PI / 4, -Math.PI / 4]) { const bar = box(failX, 0, 0, 0, RED, [0.18, 1.0, 0.18], 0.9, true); bar.rotation.z = angle; }
-const markLight = sphere(rig, 0.2, RED, 0.0, true); const targetPost = box(rig, 0, 0, 0, 0x396078, [0.1, 0.82, 0.1], 0.8, false);
+const markLight = sphere(rig, 0.2, RED, 0.0, true);
 
 function rampPoint(progress, angle) {
   return new THREE.Vector3(-4.5 + 7.25 * progress * Math.cos(angle), 0.72 + 7.25 * progress * Math.sin(angle) + 0.48, 0.52);
 }
 function setTarget(angle) {
-  const p = rampPoint(0.83, angle); targetRing.position.copy(p); targetCore.position.copy(p); targetPost.position.set(p.x, p.y - 0.36, p.z - 0.16); targetFlag.position.set(p.x + 0.5, p.y + 0.46, p.z);
+  const p = rampPoint(0.83, angle); targetRing.position.copy(p); targetRing.rotation.z = angle; targetCore.position.copy(p);
+  targetPost.position.set(p.x - 0.78, p.y + 0.42, p.z); targetPost.rotation.z = angle;
+  targetPostFar.position.set(p.x + 0.78, p.y + 0.42, p.z); targetPostFar.rotation.z = angle;
+  targetFlag.position.set(p.x, p.y + 1.04, p.z); targetFlag.rotation.z = angle;
+  goalLabel.position.set(p.x, p.y + 1.55, p.z + 0.5);
 }
 setTarget(-0.22);
 
-// A small notebook stores observed outcomes; it never competes with the active experiment.
-const logbook = group(scene, 'persistent experiment log');
-const logCover = box(logbook, 0, 0, 0, 0x173044, [5.6, 3.8, 0.36], 0.92, false);
-const logSpine = box(logbook, -2.57, 0, 0.22, CYAN, [0.16, 3.45, 0.08], 0.85, true);
-const logTitle = text(logbook, 'TRIAL RECORD', { width: 5.6, size: 104, x: 0.05, y: 1.24, z: 0.38 });
-const row1 = text(logbook, '01   SHORT', { width: 4.8, size: 104, color: '#ff9aa9', glow: '#ff3854', x: 0.18, y: 0.26, z: 0.4 });
-const row2 = text(logbook, '02   REACHED', { width: 5.0, size: 104, color: '#b7ffe0', glow: '#74e7ad', x: 0.1, y: -0.68, z: 0.4 });
-const row3 = text(logbook, '03   DRIFTED', { width: 5.0, size: 104, color: '#ffd88b', glow: '#ffcf72', x: 0.12, y: -1.62, z: 0.4 });
-logbook.position.set(8.6, -1.0, 4.0); logbook.rotation.y = -0.18; logbook.rotation.z = -0.08;
+// A clear left-to-right timeline shows the same test succeeding once, then failing later.
+const logbook = group(scene, 'same test over time');
+const logCover = box(logbook, 0, 0, 0, 0x112333, [7.2, 3.9, 0.24], 0.74, false);
+const logSpine = box(logbook, 0, 0.05, 0.18, CYAN, [4.95, 0.075, 0.10], 0.72, true);
+const logArrow = mesh(logbook, new THREE.ConeGeometry(0.19, 0.42, 3), CYAN, 0.88, true); logArrow.position.set(2.48, 0.05, 0.28); logArrow.rotation.z = -Math.PI / 2;
+const logTitle = text(logbook, 'SAME TEST · OVER TIME', { width: 6.7, size: 86, x: 0, y: 1.25, z: 0.38 });
+const row1 = text(logbook, 'MISS', { width: 5.2, size: 112, color: '#ff9aa9', glow: '#ff3854', x: -1.72, y: -1.15, z: 0.4 });
+const row2 = text(logbook, 'HIT', { width: 5.2, size: 112, color: '#b7ffe0', glow: '#74e7ad', x: 0, y: -1.15, z: 0.4 });
+const row3 = text(logbook, 'MISS', { width: 5.2, size: 112, color: '#ff9aa9', glow: '#ff3854', x: 1.72, y: -1.15, z: 0.4 });
+function outcomeMark(x, success) {
+  const g = group(logbook, success ? 'hit target' : 'miss target'); g.position.set(x, 0.05, 0.42);
+  if (success) { const a = box(g, -0.13, -0.03, 0, GREEN, [0.14, 0.48, 0.12], 0.96, true); a.rotation.z = -0.68; const b = box(g, 0.12, 0.10, 0, GREEN, [0.14, 0.88, 0.12], 0.96, true); b.rotation.z = 0.66; }
+  else { const a = box(g, 0, 0, 0, RED, [0.15, 0.78, 0.12], 0.96, true); a.rotation.z = Math.PI / 4; const b = box(g, 0, 0, 0, RED, [0.15, 0.78, 0.12], 0.96, true); b.rotation.z = -Math.PI / 4; }
+  return g;
+}
+const outcomeMarks = [outcomeMark(-1.72, false), outcomeMark(0, true), outcomeMark(1.72, false)];
+logbook.position.set(5.4, -1.0, 4.0); logbook.rotation.y = -0.08;
 
 // Three tangible candidate tests branch from the next-investigation decision.
 const choices = [];
@@ -173,13 +191,16 @@ const branchRoutes = choices.map(c => {
   return tube(scene, new THREE.CatmullRomCurve3([start, mid, end]), 0.045, CYAN, 0.34);
 });
 
-// A visibly different, still-unresolved unfamiliar test approaches the loop at the end.
-const unknownCase = group(scene, 'unfamiliar case'); unknownCase.position.set(9.6, -0.2, 5.3); unknownCase.scale.setScalar(1.16);
-box(unknownCase, 0, -1.05, 0, 0x26384a, [3.5, 0.32, 1.55], 0.88, false);
-const oddRamp = box(unknownCase, -0.45, -0.05, 0, 0x40627a, [2.5, 0.24, 0.74], 0.92, false); oddRamp.rotation.z = 0.34;
-const unknownBall = sphere(unknownCase, 0.45, GOLD, 0.96, true, 24); unknownBall.position.set(-1.12, 0.78, 0.35);
-const unknownBlock = box(unknownCase, 0.85, -0.02, 0.38, RED, [0.70, 0.94, 0.64], 0.9, true);
-const unknownLabel = text(unknownCase, 'UNFAMILIAR CASE', { width: 6.1, size: 70, color: '#ffe0a4', glow: '#ffcf72', x: 0, y: 1.65, z: 0.5 });
+// The same experiment meets a plainly visible new obstacle; the ball rolls into it and stops.
+const unknownCase = group(scene, 'unfamiliar case with new obstacle'); unknownCase.position.set(5.25, -0.35, 5.3); unknownCase.scale.setScalar(1.48);
+box(unknownCase, 0, -1.08, 0, 0x26384a, [4.9, 0.34, 1.95], 0.9, false);
+const oddRamp = box(unknownCase, -0.42, -0.02, 0, 0x40627a, [3.35, 0.30, 1.10], 0.96, false); oddRamp.rotation.z = -0.28;
+const unknownLeg = box(unknownCase, -0.15, -0.60, 0.02, 0x54728a, [0.26, 1.42, 0.25], 0.92, false); unknownLeg.rotation.z = -0.15;
+const unknownFoot = box(unknownCase, -0.20, -1.03, 0.02, CYAN, [1.10, 0.13, 1.25], 0.8, false);
+const unknownBall = sphere(unknownCase, 0.46, GOLD, 0.98, true, 26); unknownBall.position.set(-1.55, 0.66, 0.43);
+const unknownBlock = box(unknownCase, 0.85, -0.03, 0.42, 0xb84450, [0.78, 1.02, 1.02], 0.94, false);
+for (let i = 0; i < 3; i++) { const stripe = box(unknownCase, 0.85, -0.33 + i * 0.30, 0.95, GOLD, [0.80, 0.10, 0.05], 0.96, true); stripe.rotation.z = -0.28; }
+const unknownLabel = text(unknownCase, 'NEW OBSTACLE', { width: 4.5, size: 72, color: '#ffe0a4', glow: '#ffcf72', x: 0.9, y: 1.15, z: 1.0 });
 
 // A compact visual intake contrasts passive information with active experimentation.
 const intake = group(scene, 'information archive'); intake.position.set(-10.3, -0.5, 3.6);
@@ -190,21 +211,21 @@ for (let i = 0; i < 24; i++) { const b = sphere(scene, rr(0.07, 0.13), i % 3 ? B
 
 const headlines = {
   information: text(scene, 'INFORMATION ISN’T ENOUGH', { width: 15.0, size: 74, y: 7.72 }),
-  hypothesis: text(scene, 'PREDICT: REACH THE MARK', { width: 13.4, size: 70, y: 7.72 }),
-  failure: text(scene, 'THE BALL FALLS SHORT', { width: 13.6, size: 74, color: '#ffd9df', glow: '#ff3854', y: 7.72 }),
+  hypothesis: text(scene, 'WILL THE MARBLE REACH THE GOAL?', { width: 16.0, size: 68, y: 7.72 }),
+  failure: text(scene, 'THE MARBLE STOPS SHORT', { width: 14.8, size: 72, color: '#ffd9df', glow: '#ff3854', y: 7.72 }),
   revision: text(scene, 'RAISE THE RAMP · RETEST', { width: 14.0, size: 70, color: '#e6fbff', glow: '#55e5ff', y: 7.72 }),
   ai: text(scene, 'AI CAN DO PARTS', { width: 11.6, size: 76, y: 7.72 }),
   lasting: text(scene, 'DOES LEARNING LAST?', { width: 13.2, size: 74, color: '#ffe5b1', glow: '#ffcf72', y: 7.72 }),
   next: text(scene, 'WHAT SHOULD IT TEST NEXT?', { width: 15.0, size: 70, y: 7.72 }),
   correct: text(scene, 'CAN IT CORRECT ITS OWN ERROR?', { width: 16.0, size: 66, color: '#ffd9df', glow: '#ff3854', y: 7.72 }),
-  challenge: text(scene, 'A NEW CASE · THE LOOP PAUSES', { width: 16.0, size: 66, color: '#ffe5b1', glow: '#ffcf72', y: 7.72 }),
+  challenge: text(scene, 'NEW CONDITIONS CAN BREAK THE RULE', { width: 17.0, size: 64, color: '#ffe5b1', glow: '#ffcf72', y: 7.72 }),
 };
 
 // Particle cloud that inherits Task 3's exact final positions, colors and camera state.
 const IN_COUNT = 420, inPositions = new Float32Array(IN_COUNT * 3), inSource = new Float32Array(IN_COUNT * 3), inTarget = new Float32Array(IN_COUNT * 3), inColors = new Float32Array(IN_COUNT * 3);
 const inGeo = new THREE.BufferGeometry(); inGeo.setAttribute('position', new THREE.BufferAttribute(inPositions, 3).setUsage(THREE.DynamicDrawUsage)); inGeo.setAttribute('color', new THREE.BufferAttribute(inColors, 3)); inGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 180);
 const inMat = pointMat(5.4, 0.84), incoming = new THREE.Points(inGeo, inMat); scene.add(incoming);
-for (let i = 0; i < IN_COUNT; i++) { const a = i / IN_COUNT * Math.PI * 2, r = 4.3 + 1.4 * Math.sin(i * 0.17); inTarget.set([Math.cos(a) * r, Math.sin(a) * r * 0.64, Math.sin(a * 2.0) * 3.2], i * 3); inSource.set([rr(-12, 12), rr(-8, 8), rr(-8, 8)], i * 3); inPositions.set(inSource.subarray(i * 3, i * 3 + 3), i * 3); const c = new THREE.Color(i % 3 === 0 ? CYAN : i % 3 === 1 ? BLUE : GOLD); inColors.set([c.r, c.g, c.b], i * 3); }
+for (let i = 0; i < IN_COUNT; i++) { const target = loopCurve.getPointAt(i / IN_COUNT).multiply(loop.scale); inTarget.set([target.x, target.y, target.z], i * 3); inSource.set([rr(-12, 12), rr(-8, 8), rr(-8, 8)], i * 3); inPositions.set(inSource.subarray(i * 3, i * 3 + 3), i * 3); const c = new THREE.Color(i % 3 === 0 ? CYAN : i % 3 === 1 ? BLUE : GOLD); inColors.set([c.r, c.g, c.b], i * 3); }
 let incomingReady = false;
 function prepareIncoming() {
   if (incomingReady) return;
@@ -221,9 +242,9 @@ const outMat = pointMat(5.2, 0.68), outgoing = new THREE.Points(outGeo, outMat);
 for (let i = 0; i < OUT_COUNT; i++) { const u = i / OUT_COUNT, p = loopCurve.getPointAt(u); outData.push({ source: p.clone().add(new THREE.Vector3(rr(-2.5, 2.5), rr(-2.3, 2.3), rr(-1.0, 1.0))), end: new THREE.Vector3(rr(-24, 24), rr(-14, 14), rr(-12, 12)) }); const c = new THREE.Color(i % 4 === 0 ? GOLD : i % 3 === 0 ? GREEN : CYAN); outColors.set([c.r, c.g, c.b], i * 3); }
 
 function stageWeights(t) {
-  const pulse = [0, 0, 0, 0];
+  const pulse = [0.48, 0.48, 0.48, 0.48];
   const windows = [[6.4, 7.95], [8.0, 9.55], [9.55, 11.25], [11.15, 13.22]];
-  for (let i = 0; i < 4; i++) pulse[i] = 0.18 + 0.82 * alphaWindow(t, windows[i][0], windows[i][1], 0.22, 0.22);
+  for (let i = 0; i < 4; i++) pulse[i] = 0.48 + 0.52 * alphaWindow(t, windows[i][0], windows[i][1], 0.22, 0.22);
   if (t >= 13.25 && t < 16.95) pulse[0] = 0.95;
   if (t >= 13.25 && t < 16.95) pulse[1] = 0.95 * (0.5 + 0.5 * Math.sin(t * 2.2));
   if (t >= 13.25 && t < 16.95) pulse[2] = 0.8;
@@ -234,9 +255,9 @@ function stageWeights(t) {
   return pulse;
 }
 function updateIncoming(t) {
-  const form = smooth(t / 3.25), p = inGeo.attributes.position.array;
+  const form = smooth(t / 1.15), p = inGeo.attributes.position.array;
   for (let i = 0; i < IN_COUNT; i++) { const j = i * 3, q = form; p[j] = THREE.MathUtils.lerp(inSource[j], inTarget[j], q); p[j + 1] = THREE.MathUtils.lerp(inSource[j + 1], inTarget[j + 1], q); p[j + 2] = THREE.MathUtils.lerp(inSource[j + 2], inTarget[j + 2], q); }
-  inGeo.attributes.position.needsUpdate = true; inMat.uniforms.uOpacity.value = 0.82 * (1 - smooth((t - 2.6) / 1.05));
+  inGeo.attributes.position.needsUpdate = true; inMat.uniforms.uOpacity.value = 0.76 * (1 - smooth((t - 1.12) / 0.58));
 }
 function updateRig(t, rigAlpha) {
   const angleMix = smooth((t - 11.42) / 0.72), angle = THREE.MathUtils.lerp(-0.22, -0.36, angleMix);
@@ -255,7 +276,7 @@ function updateRig(t, rigAlpha) {
   targetRing.material.color.setHex(mismatch ? RED : GREEN);
   targetCore.material.color.setHex(mismatch ? RED : GREEN);
   const tp = rampPoint(0.83, angle); markLight.position.copy(tp); markLight.material.opacity = rigAlpha * (mismatch ? 0.9 * repeatFailure + (t >= 9.55 && t < 11.4 ? 0.9 : 0) : 0.0);
-  const postTop = tp.clone().add(new THREE.Vector3(0.55, 0.46, -0.15)); targetFlag.position.copy(postTop); failX.position.copy(tp).add(new THREE.Vector3(0.45, 0.65, 0.35));
+  failX.position.copy(tp).add(new THREE.Vector3(0.45, 0.65, 0.35));
   const predictedA = alphaWindow(t, 6.45, 9.6, 0.32, 0.28);
   for (let i = 0; i < expectedDots.length; i++) { const u = (i + 1) / (expectedDots.length + 1), pt = rampPoint(0.83 * u, angle); expectedDots[i].position.copy(pt); expectedDots[i].position.y += 0.34; expectedDots[i].material.opacity = 0.72 * predictedA; }
   const failA = Math.max(alphaWindow(t, 9.55, 11.45, 0.18, 0.22), repeatFailure);
@@ -264,14 +285,20 @@ function updateRig(t, rigAlpha) {
   const revisedA = alphaWindow(t, 11.35, 13.25, 0.22, 0.3);
   targetRing.material.opacity = 0.9 * ballA * rigAlpha; targetCore.material.opacity = 0.86 * ballA * rigAlpha; targetFlag.material.opacity = 0.75 * ballA * rigAlpha;
   // The physical fulcrum rises as the hypothesis is revised.
-  const supportY = THREE.MathUtils.lerp(-0.15, -0.60, angleMix);
+  const supportY = THREE.MathUtils.lerp(0.25, -0.15, angleMix);
   supportBase.position.set(-1.55, supportY, 0.08); supportBase.material.opacity = 0.92 * rigAlpha;
-  supportFoot.position.set(-1.55, supportY - 0.19, 0.08); supportFoot.material.opacity = 0.76 * rigAlpha;
+  supportFoot.position.set(-1.55, -3.12, 0.08); supportFoot.material.opacity = 0.82 * rigAlpha;
+  const apex = new THREE.Vector3(-1.55, supportY - 0.22, 0.08);
+  poseSupport(supportLegLeft, new THREE.Vector3(-2.72, -3.02, 0.08), apex);
+  poseSupport(supportLegRight, new THREE.Vector3(-0.38, -3.02, 0.08), apex);
   if (revisedA > 0.01 && t > 12.0) { const a = rampPoint(0.83, angle); targetRing.material.color.setHex(GREEN); targetCore.material.color.setHex(GREEN); }
   return { angle, ballA, firstRun, secondRun, failA, predictedA };
 }
-const supportBase = box(rig, -1.55, -0.15, 0.08, 0x355a72, [1.05, 0.35, 1.15], 0.92, false);
-const supportFoot = box(rig, -1.55, -0.34, 0.08, CYAN, [1.28, 0.12, 1.34], 0.76, true);
+const supportBase = box(rig, -1.55, 0.25, 0.08, 0x355a72, [1.05, 0.35, 1.15], 0.92, false);
+const supportFoot = box(rig, -1.55, -3.12, 0.08, 0x396078, [2.8, 0.16, 1.35], 0.82, false);
+const supportLegLeft = box(rig, 0, 0, 0, 0x41637a, [0.24, 3.6, 0.22], 0.92, false);
+const supportLegRight = box(rig, 0, 0, 0, 0x41637a, [0.24, 3.6, 0.22], 0.92, false);
+function poseSupport(leg, a, b) { const d = b.clone().sub(a); leg.position.copy(a).add(b).multiplyScalar(0.5); leg.rotation.z = Math.atan2(d.x, d.y); leg.scale.y = d.length() / 3.6; }
 
 function updateChoices(t) {
   const a = alphaWindow(t, 21.18, 23.7, 0.25, 0.28);
@@ -294,8 +321,10 @@ function updateCamera(t) {
     const u = smooth(t / 3.4); camera.position.copy(inheritedCamera).lerp(new THREE.Vector3(0, 0.35, 28.8), u); cameraAim.copy(inheritedAim).lerp(new THREE.Vector3(0, 0.0, 0), u);
   } else if (t < 13.3) {
     const q = t - 3.4; camera.position.set(Math.sin(q * 0.16) * 1.15, 0.2 + Math.sin(q * 0.22) * 0.3, 26.5 - smooth(q / 10) * 0.8); cameraAim.set(0, 0, 0);
-  } else if (t < 21.2) {
+  } else if (t < 17.35) {
     const q = t - 13.3; camera.position.set(1.1 + Math.sin(q * 0.19) * 1.45, 0.25 + Math.sin(q * 0.18) * 0.34, 25.7 - smooth(q / 8) * 0.6); cameraAim.set(0.35, 0.1, 0.3);
+  } else if (t < 21.2) {
+    const u = smooth((t - 17.35) / 3.85); camera.position.set(1.4 + u * 2.1 + Math.sin(t * 0.16) * 0.25, 0.25, 25.1); cameraAim.set(0.35 + u * 2.0, 0.1, 0.3);
   } else {
     const u = smooth((t - 21.2) / 5.8); camera.position.set(1.2 + u * 1.6 + Math.sin(t * 0.16) * 0.4, 0.2, 25.0 - 0.25 * u); cameraAim.set(0.6 + u * 1.0, 0, 0.5);
   }
@@ -303,7 +332,9 @@ function updateCamera(t) {
 }
 function renderFrame(frame) {
   const t = clamp(Number(frame) / FPS, 0, DURATION); prepareIncoming(); updateIncoming(t);
-  const loopA = alphaWindow(t, 2.35, 27.28, 0.65, 0.55);
+  let loopA = alphaWindow(t, 0.35, 27.28, 0.48, 0.55);
+  if (t >= 4.8 && t < 13.25) loopA *= 0.68;
+  if (t >= 17.35 && t < 21.2) loopA *= 0.48;
   setAlpha(loop, loopA);
   const weights = stageWeights(t);
   for (let i = 0; i < loopNodes.length; i++) { const w = weights[i]; loopNodes[i].core.material.color.setHex(i === 2 && t > 9.5 && t < 11.4 ? RED : (i === 2 && t > 17.4 ? GOLD : CYAN)); loopNodes[i].halo.material.color.copy(loopNodes[i].core.material.color); setAlpha(loopNodes[i].group, loopA * w); }
@@ -312,15 +343,15 @@ function renderFrame(frame) {
   const progress = t < 6.4 ? 0 : t < 13.25 ? clamp((t - 6.4) / 6.85) : t < 17.4 ? clamp((t - 13.25) / 3.7) : (t - 17.4) * 0.42;
   const pulsePoint = loopCurve.getPointAt(((progress % 1) + 1) % 1).multiply(loop.scale); loopPulse.position.copy(pulsePoint); setAlpha(loopPulse, loopA * (partial ? (progress % 1 < 0.73 ? 0.95 : 0.08) : 0.9));
 
-  const intakeA = alphaWindow(t, 3.35, 6.55, 0.35, 0.3); setAlpha(intake, intakeA);
-  for (const d of intakeBits) { const q = (d.phase + t * 0.42) % 1; d.mesh.position.set(-13.1 + q * 2.45, -0.25 + d.offset + Math.sin(q * 6 + d.phase * 5) * 0.34, 3.4 + Math.sin(q * Math.PI * 2) * 0.55); d.mesh.material.opacity = 0.78 * intakeA; }
+  const intakeA = 0; setAlpha(intake, intakeA);
+  for (const d of intakeBits) d.mesh.material.opacity = 0;
   const rigA = alphaWindow(t, 4.8, 26.85, 0.65, 0.55); setAlpha(rig, rigA); const rigState = updateRig(t, rigA);
   const bookAlpha = alphaWindow(t, 17.35, 21.08, 0.42, 0.35); setAlpha(logbook, bookAlpha); textAlpha(logTitle, bookAlpha); textAlpha(row1, bookAlpha); textAlpha(row2, bookAlpha); textAlpha(row3, bookAlpha);
   // A third, inconsistent later trial makes the long-term retention problem visible.
-  if (t > 19.55) { row3.material.color.set('#ffe0a4'); }
+  if (t > 19.55) { row3.material.color.set('#ff9aa9'); }
   updateChoices(t);
   const unknownA = alphaWindow(t, 26.0, 28.25, 0.38, 0.42); setAlpha(unknownCase, unknownA);
-  const unknownPulse = smooth((t - 26.45) / 0.8); unknownBall.position.x = -1.12 + unknownPulse * 0.7; unknownBlock.material.color.setHex(t > 26.95 ? RED : 0x6d92a7);
+  const unknownPulse = smooth((t - 26.45) / 0.8); unknownBall.position.set(-1.55 + unknownPulse * 1.60, 0.66 - unknownPulse * 0.42, 0.43); unknownBlock.material.color.setHex(t > 26.95 ? RED : 0x6d92a7);
 
   textAlpha(headlines.information, alphaWindow(t, 3.35, 6.25, 0.25, 0.22));
   textAlpha(headlines.hypothesis, alphaWindow(t, 6.42, 9.52, 0.22, 0.24));

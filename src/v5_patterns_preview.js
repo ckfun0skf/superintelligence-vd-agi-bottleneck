@@ -354,8 +354,7 @@ const outData = [], outPositions = new Float32Array(OUT_COUNT * 3), outColors = 
 for (let i = 0; i < OUT_COUNT; i++) {
   const a = rr(0, Math.PI * 2), h = rr(-1, 1), r = Math.sqrt(1 - h * h);
   const source = new THREE.Vector3(Math.cos(a) * r * 1.8, -2.8 + h * 1.4, 1.0 + Math.sin(a) * r * 1.6);
-  const dir = new THREE.Vector3(rr(-1, 1), rr(-0.8, 0.8), rr(-1, 1)).normalize();
-  const end = source.clone().addScaledVector(dir, rr(8, 15));
+  const end = new THREE.Vector3(rr(-1.15, 1.15), rr(-0.85, 0.85), rr(-0.75, 0.75));
   outData.push({ source, end, phase: rr(0, Math.PI * 2) });
   const c = new THREE.Color(i % 4 === 0 ? GREEN : i % 3 === 0 ? BLUE : CYAN);
   outColors.set([c.r, c.g, c.b], i * 3);
@@ -420,12 +419,12 @@ function updatePlants(plants, alpha, { wilt = false, dry = false, showRoots = fa
   }
 }
 function updateExit(t) {
-  const start = 31.06, spread = smooth((t - start) / 0.55), p = outGeo.attributes.position.array;
+  const start = 30.30, gather = smooth((t - start) / 0.82), p = outGeo.attributes.position.array;
   for (let i = 0; i < OUT_COUNT; i++) {
     const d = outData[i], j = i * 3;
-    p[j] = THREE.MathUtils.lerp(d.source.x, d.end.x, spread) + Math.sin(t * 1.3 + d.phase) * 0.16 * spread;
-    p[j + 1] = THREE.MathUtils.lerp(d.source.y, d.end.y, spread) + Math.cos(t * 1.1 + d.phase) * 0.16 * spread;
-    p[j + 2] = THREE.MathUtils.lerp(d.source.z, d.end.z, spread);
+    p[j] = THREE.MathUtils.lerp(d.source.x, d.end.x, gather) + Math.sin(t * 1.3 + d.phase) * 0.10 * gather;
+    p[j + 1] = THREE.MathUtils.lerp(d.source.y, d.end.y, gather) + Math.cos(t * 1.1 + d.phase) * 0.10 * gather;
+    p[j + 2] = THREE.MathUtils.lerp(d.source.z, d.end.z, gather);
   }
   outGeo.attributes.position.needsUpdate = true;
   outMat.uniforms.uOpacity.value = 0.62 * smooth((t - start) / 0.14);
@@ -483,7 +482,7 @@ function renderFrame(frame) {
   setTextAlpha(sameOutcome, windowAlpha(t, 13.92, 16.78, 0.34, 0.24));
 
   const previewPlantA = 0.92 * windowAlpha(t, 17.08, 21.42, 0.32, 0.38);
-  const testA = windowAlpha(t, 21.05, 31.10, 0.42, 0.25);
+  const testA = windowAlpha(t, 21.05, 30.82, 0.42, 0.20);
   const plantA = Math.max(previewPlantA, testA);
   updatePlants([predictedPlant], plantA, { wilt: smooth((t - 28.30) / 0.50), dry: t >= 24.20, time: t });
   setTextAlpha(unfamiliarTitle, windowAlpha(t, 17.08, 20.65, 0.22, 0.34));
@@ -495,13 +494,13 @@ function renderFrame(frame) {
   setTextAlpha(actualLabel, windowAlpha(t, 28.50, 30.08, 0.24, 0.24));
   setGroupAlpha(mismatch, windowAlpha(t, 28.50, 30.08, 0.22, 0.22));
 
-  const hiddenA = windowAlpha(t, 24.20, 30.98, 0.34, 0.18);
+  const hiddenA = windowAlpha(t, 24.20, 30.68, 0.34, 0.15);
   setGroupAlpha(cutaway, hiddenA);
   cutaway.position.y = -0.45 * (1 - smooth((t - 24.20) / 0.65));
   moistureFill.scale.y = 0.09;
   moistureFill.position.y = -4.52 + moistureFill.scale.y * 0.60;
 
-  const matchA = windowAlpha(t, 30.10, 31.10, 0.24, 0.16);
+  const matchA = windowAlpha(t, 30.10, 30.76, 0.24, 0.18);
   setGroupAlpha(matchedCheck, matchA);
   setTextAlpha(nextLabel, matchA);
   setTextAlpha(matchedTitle, matchA);
