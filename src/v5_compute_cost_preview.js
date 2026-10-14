@@ -235,8 +235,10 @@ const reliableLabel = makeText(THREE,compareLeft,'REPEATABLE OUTPUT',{width:4.8,
 const trials = [];
 for(let i=0;i<3;i++){
   const x=-1.55+i*1.55; frontBox(compareLeft,x,-.18,.17,1.35,.96,.07,0x122d2b,.99,false);
-  const num=makeText(THREE,compareLeft,`TEST ${i+1}`,{width:1.30,size:186,color:'#c4eee1',glow:'#74e7ad',x,y:.07,z:.26});
-  const check=makeText(THREE,compareLeft,'✓',{width:1.05,size:240,color:'#74e7ad',glow:'#74e7ad',x,y:-.34,z:.27});
+  const num=makeText(THREE,compareLeft,`TEST ${i+1}`,{width:1.30,size:220,color:'#c4eee1',glow:'#74e7ad',x,y:.07,z:.26});
+  const check=new THREE.Group(); compareLeft.add(check);
+  beam(check,new THREE.Vector3(x-.14,-.27,.31),new THREE.Vector3(x-.02,-.39,.31),.05,C.green,.99,true);
+  beam(check,new THREE.Vector3(x-.02,-.39,.31),new THREE.Vector3(x+.20,-.13,.31),.05,C.green,.99,true);
   trials.push({num,check});
 }
 const compareRight = hudPanel(3.35,-1.65,5.55,2.45,0x1c1910);
@@ -325,7 +327,7 @@ function renderFrame(frame) {
   // Closing question: repeated test results sit opposite a visibly draining power store.
   const compareA=win(t,24.56,29.98,.28,.12);
   fadeGroup(compareLeft,compareA);fadeGroup(compareRight,compareA);
-  trials.forEach((v,i)=>{setTextAlpha(v.num,compareA);setTextAlpha(v.check,compareA);});
+  trials.forEach(v=>setTextAlpha(v.num,compareA));
   setTextAlpha(reliableLabel,compareA);setTextAlpha(costLabel,compareA);setTextAlpha(highCost,compareA);
   const discharge=smooth((t-24.75)/4.5), charge=Math.max(.12,1-.78*discharge); finalCharge.scale.x=charge;finalCharge.position.x=-1.75+1.325*charge;
   // Keep a recognizable server bank in the final frame; no collapse into an unexplained line.
