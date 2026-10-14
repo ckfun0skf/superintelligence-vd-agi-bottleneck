@@ -32,18 +32,20 @@ V5 使用**單一互動預覽頁與連續旁白時間軸**；目前已整合00:0
 ## 專案內容
 
 - `index.html` — V4 16:9 畫布與其下方的播放器、時間軸、章節跳轉及同步音軌；提供V5預覽入口
-- `v5-preview.html` — 唯一V5互動預覽頁，單一音軌／時間軸涵蓋00:00–01:50.00，章節控制位於畫布下方
+- `v5-preview.html` — 唯一V5互動預覽頁，單一音軌／時間軸涵蓋00:00–02:20.00，章節控制位於畫布下方
 - `src/v5_continuous_preview.js` — 單一renderer及跨場景粒子／相機handoff總控
 - `src/v4_particle_documentary.js` — 保留的 V4 Three.js 全片場景
 - `src/v5_opening_preview.js` — V5 第一任務的可重現 3D 開場場景與即時播放器同步
 - `src/v5_reasoning_preview.js` — V5 第二任務的 3D 決策樹、訊號傳遞及錯誤傳播場景
 - `src/v5_patterns_preview.js` — V5 第三任務的自動駕駛感知、封路成因、三路線機率預測及失配更新場景
 - `src/v5_learning_loop_preview.js` — V5 第四任務延續同一車程，使用Cyber掃描框、目標標籤、路線重算及跨行程記錄
+- `src/v5_compute_cost_preview.js` — V5 第五任務以立體計算網絡呈現晶片、能源、資料、時間及規模不保證通用智能
 - `src/v5_autodrive_world.js` — Task3／4共用城市道路、示威封路、立體車輛、檢測框與路線機率HUD
-- `assets/audio/v5_continuous_preview_01_50_00.mp3` — 從原始無損混音裁出的連續V5預覽音軌（00:00–01:50.00）
+- `assets/audio/v5_continuous_preview_01_50_00.mp3` — 前一版連續V5預覽音軌（00:00–01:50.00，已由2:20版取代）
+- `assets/audio/v5_continuous_preview_02_20_00.mp3` — 從原始無損混音裁出的Task5連續預覽音軌（00:00–02:20.00）
 - `assets/vendor/three.module.js`、`three.core.js` — V5 頁使用的 Three.js 0.186.1 固定版本及其模組相依檔
 - `assets/audio/` — 完整混音（MP3播放版及WAV無損母檔）、七段分軌旁白及兩段配樂
 - `render_v4.js` — Puppeteer／Chromium 逐格算圖工具；離線算圖時隱藏網頁控制列
 - `render/Super_Intelligent_AGI_Bottleneck_V4_1080p.mp4` — 最終成片規格記錄於 `V4_DELIVERY_NOTES.md`；大型成片未放入repo
 
-音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1及2已通過審閱；Task3／4同一自動駕駛案例已依最新回饋修正：路線光帶浮於路面、封鎖路線保持紅色、Route C從附近分岔接續，Task4另行程沿Route A抵達目的地；每組互斥路線機率合計100%。最新連續預覽待審閱。**後續段落逐次確認再製作。
+音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1至4已完成目前修訂；Task3／4同一自動駕駛案例已依回饋校正路線高度、封鎖狀態、連續行程與互斥機率。Task5（01:50–02:20）以立體運算網絡呈現晶片、能源、資料、時間、能力增長與成本取捨，已完成逐格與播放同步驗收，現待使用者審閱。**後續段落逐次確認再製作。
