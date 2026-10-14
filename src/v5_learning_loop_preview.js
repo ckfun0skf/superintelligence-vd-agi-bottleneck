@@ -82,15 +82,23 @@ function setHeadlines(t) {
   const explore = win(t, 21.1, 23.62, .22, .22); setTextAlpha(investigateTag, explore);
   routeBeacon.material.opacity = .92 * explore * (.55 + .45 * Math.sin(t * 5) ** 2); probe.material.opacity = .98 * explore;
 }
+function nearestRouteProgress(routeIndex, x, z) {
+  const curve = world.routes[routeIndex].curve; let bestU = 0, bestD = Infinity;
+  for (let i = 0; i <= 1800; i++) { const u = i / 1800, p = curve.getPointAt(u), d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < bestD) { bestD = d; bestU = u; } }
+  return bestU;
+}
+const cBranchB = nearestRouteProgress(1, -3, 5), cBranchPoint = world.routes[1].curve.getPointAt(cBranchB);
+const cBranch = nearestRouteProgress(2, cBranchPoint.x, cBranchPoint.z), cWestJunction = nearestRouteProgress(2, -8, 5);
+const aWestJunction = nearestRouteProgress(0, -8, 5), aProtestStop = nearestRouteProgress(0, -3, 1.05);
 function animateCar(t) {
-  if (t < 7.8) { world.placeCar(2, .07); return; }
-  if (t < 9.55) { world.placeCar(2, .07 + smooth((t - 7.8) / 1.75) * .23); return; }
-  if (t < 11.35) { world.placeCar(2, .30); return; }
-  if (t < 12.15) { world.placeCar(2, THREE.MathUtils.lerp(.30, .05, smooth((t - 11.35) / .8))); return; }
-  if (t < 17.1) { world.placeCar(0, .05 + smooth((t - 12.15) / 4.9) * .28); return; }
-  if (t < 21.1) { world.placeCar(0, .33); return; }
-  if (t < 24.0) { world.placeCar(0, .33); return; }
-  if (t < 25.1) { world.placeCar(0, THREE.MathUtils.lerp(.33, .50, smooth((t - 24.0) / .75))); return; }
+  const cStart = cBranch + .025;
+  if (t < 7.8) { world.placeCar(2, THREE.MathUtils.lerp(cStart, cWestJunction, smooth(t / 7.8))); return; }
+  if (t < 9.55) { world.placeCar(2, cWestJunction + .035 * smooth((t - 7.8) / 1.75)); return; }
+  if (t < 11.35) { world.placeCar(2, cWestJunction + .035); return; }
+  if (t < 12.15) { world.placeCar(2, THREE.MathUtils.lerp(cWestJunction + .035, cWestJunction, smooth((t - 11.35) / .8))); return; }
+  if (t < 17.1) { world.placeCar(0, THREE.MathUtils.lerp(aWestJunction, aProtestStop, smooth((t - 12.15) / 4.95))); return; }
+  if (t < 24.0) { world.placeCar(0, aProtestStop); return; }
+  if (t < 25.1) { world.placeCar(0, THREE.MathUtils.lerp(aProtestStop, .50, smooth((t - 24.0) / 1.1))); return; }
   world.placeCar(0, .50 + smooth((t - 25.1) / 2.7) * .12);
 }
 function renderFrame(frame) {
@@ -103,10 +111,13 @@ function renderFrame(frame) {
   world.setCrowdSpread(spread);
   const protestMove = smooth((t - 9.52) / 1.20); world.protest.position.set(-3 + protestMove * 8, -0.24, protestMove * 5); if (protestMove > .62) world.spillover.visible = false;
   const routeScores = t < 11.2 ? [34, 20, 82] : [82, 20, 34];
-  const routeChoice = t < 11.2 ? 2 : 0;
+  const routeChoice = routeScores.indexOf(Math.max(...routeScores));
+  const mapSplit = smooth((t - 6.0) / .55) * (1 - smooth((t - 21.1) / .60));
+  const mapSide = THREE.MathUtils.lerp(-1, 1, smooth((t - 16.95) / .45)); world.setMapLayout(mapSplit, mapSide);
   world.setRouteState({ visible: t > 6.25 ? [0, 1, 2] : [2], selected: routeChoice, blocked: true, alpha: (t < 6.25 ? .72 : win(t, 6.25, 27.2, .24, .28)) * cityAlpha, scores: routeScores });
   animateCar(t);
-  const oldPred = win(t, 6.25, 11.2, .2, .18), newPred = win(t, 11.2, 16.95, .2, .3);
+  world.setBrake(t >= 9.55 && t < 11.35);
+  const oldPred = win(t, 6.25, 11.2, .24, .18), newPred = win(t, 11.36, 16.95, .24, .28);
   probabilities.show(Math.max(oldPred, newPred), routeScores, routeChoice);
   const histor = win(t, 17.2, 21.12, .20, .25); if (histor > 0) probabilities.show(Math.max(oldPred, newPred) * (1 - histor), routeScores, routeChoice);
   setHeadlines(t);

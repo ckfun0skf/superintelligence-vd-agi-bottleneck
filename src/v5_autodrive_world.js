@@ -74,16 +74,33 @@ function addCar(parent, color, x, z, scale = 1) {
   const g = new THREE.Group(); g.position.set(x, -0.24, z); g.scale.setScalar(scale); parent.add(g);
   box(g, 0, 0.25, 0, [1.32, 0.42, 0.74], color, 0.98, false);
   box(g, -0.04, 0.54, 0, [0.70, 0.32, 0.58], 0x70bad0, 0.88, false);
+  g.userData.brakeLights = [-0.24, 0.24].map(sz => box(g, -0.67, 0.31, sz, [0.075, 0.12, 0.16], C.red, 0.24, true));
   for (const sx of [-0.43, 0.43]) for (const sz of [-0.34, 0.34]) {
     const w = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.12, 12), basicMat(0x091018, 0.98, false));
     w.rotation.x = Math.PI / 2; w.position.set(sx, 0.15, sz); g.add(w);
   }
   return g;
 }
+function orthogonalRoute(points) {
+  // Road surface is y=-0.24; lift the AR tube enough that its lower radius clears asphalt.
+  const pts = points.map(([x, z]) => new THREE.Vector3(x, -0.12, z)), path = new THREE.CurvePath();
+  let cursor = pts[0].clone();
+  for (let i = 1; i < pts.length - 1; i++) {
+    const incoming = pts[i].clone().sub(pts[i - 1]).normalize(), outgoing = pts[i + 1].clone().sub(pts[i]).normalize();
+    const turn = incoming.x * outgoing.z - incoming.z * outgoing.x;
+    if (Math.abs(turn) < 0.001) { path.add(new THREE.LineCurve3(cursor.clone(), pts[i].clone())); cursor.copy(pts[i]); continue; }
+    const radius = Math.min(0.30, pts[i].distanceTo(pts[i - 1]) * 0.24, pts[i].distanceTo(pts[i + 1]) * 0.24);
+    const entry = pts[i].clone().addScaledVector(incoming, -radius), exit = pts[i].clone().addScaledVector(outgoing, radius);
+    if (cursor.distanceTo(entry) > 0.001) path.add(new THREE.LineCurve3(cursor.clone(), entry.clone()));
+    path.add(new THREE.QuadraticBezierCurve3(entry, pts[i].clone(), exit)); cursor.copy(exit);
+  }
+  if (cursor.distanceTo(pts[pts.length - 1]) > 0.001) path.add(new THREE.LineCurve3(cursor.clone(), pts[pts.length - 1].clone()));
+  return path;
+}
 function routeTube(parent, points, color, opacity) {
-  // Keep the tactical AR paths just above the asphalt instead of floating high over it.
-  const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, -0.10, z)), false, 'centripetal');
-  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 90, 0.075, 8, false), basicMat(color, opacity, true));
+  // Follow street centerlines with only small, intersection-contained corner fillets.
+  const curve = orthogonalRoute(points);
+  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 140, 0.055, 8, false), basicMat(color, opacity, true));
   parent.add(mesh); return { mesh, curve };
 }
 function makeFrame(parent, color = C.cyan) {
@@ -133,9 +150,11 @@ export function createAutoDriveWorld(THREERef, scene, camera) {
     const pole = box(city, x + 0.88, 0.6, z + 0.65, [0.11, 1.5, 0.11], 0x436176, 0.9, false);
     const lamp = sphere(city, 0.18, C.green, 0.82, true, 12); lamp.position.set(x + 0.88, 1.36, z + 0.65);
   }
-  const routeA = routeTube(city, [[-9, 5], [-8, 5], [-3, 5], [-3, 0], [3, 0], [3, -5], [9, -5]], C.red, 0.16);
-  const routeB = routeTube(city, [[-9, 5], [-8, 5], [-8, 6], [8, 6], [8, -5], [9, -5]], C.green, 0.12);
-  const routeC = routeTube(city, [[-9, 5], [-8, 5], [-8, -6], [8, -6], [8, -5], [9, -5]], C.yellow, 0.12);
+  const routeA = routeTube(city, [[-9, 5], [-8, 5], [-3, 5], [-3, 0], [3, 0], [3, -5], [9, -5]], C.cyan, 0.16);
+  // Routes B and C are alternatives from the stopped car: they share the approach to the
+  // northern junction, then branch onto real eastbound or westbound streets.
+  const routeB = routeTube(city, [[-3, 1.05], [-3, 5], [8, 5], [8, -5], [9, -5]], C.blue, 0.12);
+  const routeC = routeTube(city, [[-3, 1.05], [-3, 5], [-8, 5], [-8, -5], [8, -5], [9, -5]], C.blue, 0.12);
   const routes = [routeA, routeB, routeC];
   // A destination pad and start marker orient the route choice.
   const startPin = sphere(city, 0.22, C.cyan, 0.96, true, 16); startPin.position.set(-9, -0.02, 5);
@@ -220,6 +239,8 @@ export function createAutoDriveWorld(THREERef, scene, camera) {
     const route = routes[routeIndex]; const p = route.curve.getPointAt(clamp(progress)); const tangent = route.curve.getTangentAt(clamp(progress));
     heroCar.position.set(p.x, -0.24, p.z); heroCar.rotation.y = Math.atan2(-tangent.z, tangent.x);
   }
+  function setBrake(active = false) { heroCar.userData.brakeLights.forEach(light => { light.material.opacity = active ? 0.98 : 0.24; }); }
+  function setMapLayout(amount = 0, side = -1) { const a = clamp(amount), dir = clamp(side, -1, 1), shift = dir > 0 ? 4.0 : 2.55; city.scale.set(1 - 0.24 * a, 1, 1 - 0.12 * a); city.position.set(shift * dir * a, 0, 0); }
   function setCrowdSpread(amount) {
     crowd.scale.setScalar(0.85 + clamp(amount) * 0.70);
     crowd.position.x = clamp(amount) * 0.42;
@@ -227,16 +248,17 @@ export function createAutoDriveWorld(THREERef, scene, camera) {
     spillover.visible = amount > 0.25;
     spillover.scale.setScalar(0.72 + smooth((amount - 0.25) / 0.55) * 0.28);
   }
-  function setRouteState({visible = [0, 1, 2], selected = -1, blocked = false, alpha = 1, scores = null} = {}) {
+  function setRouteState({visible = [0, 1, 2], selected = -1, blocked = false, blockedRoutes = [], alpha = 1, scores = null} = {}) {
     const ranks = scores ? new Map(scores.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v).map((v, rank) => [v.i, rank])) : null;
     routes.forEach((r, i) => {
       const isOn = visible.includes(i); r.mesh.visible = isOn;
-      const rank = ranks?.get(i); const c = i === selected ? C.green : ranks ? (rank === 0 ? C.red : rank === 1 ? C.yellow : C.green) : (i === 0 || (blocked && i === 1) ? C.red : i === 2 ? C.yellow : C.cyan);
-      r.mesh.material.color.setHex(c); r.mesh.material.opacity = alpha * (i === selected ? 0.95 : i === 0 || blocked && i === 1 ? 0.70 : 0.42);
+      const rank = ranks?.get(i), isBlocked = blockedRoutes.includes(i) || (blocked && (i === 0 || i === 1));
+      const c = i === selected ? C.green : ranks ? (rank === 0 ? C.red : rank === 1 ? C.yellow : C.green) : isBlocked ? C.red : i === 0 ? C.cyan : C.blue;
+      r.mesh.material.color.setHex(c); r.mesh.material.opacity = alpha * (i === selected ? 0.95 : isBlocked ? 0.82 : ranks ? 0.58 : 0.46);
       r.mesh.scale.set(1, i === selected ? 1.25 : 1, 1);
     });
   }
-  return { city, blocks, routes, heroCar, queueCars, protest, people, crowd, barriers, spillover, closureSign, closureText, boxes, callouts, lidar, scanCone, radar, startPin, goalPin, startLabel, goalLabel, updateCallout, setDetection, placeCar, setCrowdSpread, setRouteState };
+  return { city, blocks, routes, heroCar, queueCars, protest, people, crowd, barriers, spillover, closureSign, closureText, boxes, callouts, lidar, scanCone, radar, startPin, goalPin, startLabel, goalLabel, updateCallout, setDetection, placeCar, setBrake, setMapLayout, setCrowdSpread, setRouteState };
 }
 
 export function createProbabilityHud(THREERef, camera) {
