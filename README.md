@@ -46,4 +46,4 @@ V5 使用**單一互動預覽頁與連續旁白時間軸**；目前已整合00:0
 - `render_v4.js` — Puppeteer／Chromium 逐格算圖工具；離線算圖時隱藏網頁控制列
 - `render/Super_Intelligent_AGI_Bottleneck_V4_1080p.mp4` — 最終成片規格記錄於 `V4_DELIVERY_NOTES.md`；大型成片未放入repo
 
-音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1及2已通過審閱；任務3及4已依最新回饋改為同一自動駕駛案例，連續預覽現待審閱。**後續段落逐次確認再製作。
+音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1及2已通過審閱；任務3及4現以同一自動駕駛案例連續呈現。最新修訂改善道路與街廓層次、四向路口斑馬線、畫布外戰術辨識標籤，並讓陌生情境一開始就同步顯示三條候選路線及機率；連續預覽待審閱。**後續段落逐次確認再製作。

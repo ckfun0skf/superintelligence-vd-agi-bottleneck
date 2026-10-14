@@ -68,10 +68,10 @@ for (let i = 0; i < OUT; i++) { const c = new THREE.Color(i % 5 === 0 ? C.green 
 
 const statusMap = Object.entries(status);
 function placeCar(t) {
-  if (t < 17.1) { world.placeCar(0, 0.035); return; }
-  if (t < 21.15) { world.placeCar(0, smooth((t - 17.1) / 2.2) * .33); return; }
-  if (t < 24.2) { world.placeCar(1, .06 + smooth((t - 21.15) / 3.0) * .28); return; }
-  if (t < 28.65) { world.placeCar(1, .34 + smooth((t - 24.2) / 4.45) * .28); return; }
+  if (t < 17.1) { world.placeCar(1, 0.025); return; }
+  if (t < 21.15) { world.placeCar(1, .025 + smooth((t - 17.1) / 4.05) * .315); return; }
+  if (t < 24.2) { world.placeCar(1, .34 + smooth((t - 21.15) / 3.05) * .28); return; }
+  if (t < 28.65) { world.placeCar(1, .62); return; }
   if (t < 30.1) { world.placeCar(1, .62); return; }
   world.placeCar(2, .02 + smooth((t - 30.1) / 1.14) * .05);
 }
@@ -81,18 +81,21 @@ function renderFrame(frame) {
   for (let i = 0; i < IN; i++) { const j = i * 3; p[j] = THREE.MathUtils.lerp(inSource[j], mapTargets[j], arrive); p[j + 1] = THREE.MathUtils.lerp(inSource[j + 1], mapTargets[j + 1], arrive); p[j + 2] = THREE.MathUtils.lerp(inSource[j + 2], mapTargets[j + 2], arrive); }
   inGeo.attributes.position.needsUpdate = true; inMat.uniforms.uOpacity.value = .78 * (1 - smooth((t - .92) / .56));
   const cityIn = smooth(t / .95); const cityOut = 1; setAlpha(world.city, cityIn * cityOut);
-  world.city.visible = cityIn * cityOut > .005; world.setDetection(t, win(t, 4.65, 16.55, .40, .40) * cityIn * cityOut, Math.max(0, (t - 5.8) / .55));
+  world.city.visible = cityIn * cityOut > .005;
   world.setCrowdSpread(win(t, 24.1, 31.24, .9, .1));
-  world.setRouteState({ visible: t > 16.9 ? [0, 1, 2] : [], selected: t > 21.0 && t < 28.45 ? 1 : t >= 30.0 ? 2 : -1, blocked: t > 28.45, alpha: win(t, 16.9, 32.0, .35, .25) * cityIn * cityOut });
+  const routeIntro = win(t, 16.55, 32.0, .28, .25) * cityIn * cityOut;
+  const predicted = t >= 28.48 ? [34, 20, 82] : [18, 76, 44];
+  const chosen = t >= 28.48 ? 2 : 1;
+  world.setRouteState({ visible: t > 16.55 ? [0, 1, 2] : [], selected: chosen, blocked: true, alpha: routeIntro, scores: predicted });
   placeCar(t);
-  const predA = win(t, 20.95, 28.45, .35, .18); const updatedA = win(t, 28.48, 31.0, .24, .16);
-  probabilities.show(Math.max(predA, updatedA), updatedA > predA ? [34, 20, 82] : [18, 76, 44], updatedA > predA ? 2 : 1);
+  const forecast = win(t, 16.72, 28.48, .28, .22), predA = win(t, 20.95, 28.45, .35, .18), updatedA = win(t, 28.48, 31.0, .24, .16);
+  probabilities.show(Math.max(forecast, predA, updatedA), predicted, chosen);
   setTextAlpha(title, win(t, 9.95, 16.3, .24, .20));
   sourceLines.forEach((s, i) => setTextAlpha(s, win(t, .25 + i * .48, 4.12, .20, .35)));
   statusMap.forEach(([key, s]) => {
     let a = 0;
     if (key === 'input') a = win(t, .20, 4.55, .25, .30);
-    if (key === 'pattern') a = win(t, 4.88, 10.0, .24, .30);
+    if (key === 'pattern') a = win(t, 4.88, 9.62, .24, .20);
     if (key === 'cause') a = win(t, 10.35, 16.4, .26, .22);
     if (key === 'unfamiliar') a = win(t, 17.0, 20.85, .22, .28);
     if (key === 'predict') a = win(t, 21.15, 24.12, .20, .22);
@@ -105,7 +108,8 @@ function renderFrame(frame) {
   for (let i = 0; i < OUT; i++) { const j = i * 3; const start = outTarget[j]; const startY = outTarget[j + 1]; const startZ = outTarget[j + 2]; q[j] = start + Math.sin(i * 12.989 + t) * .10 * mapOut; q[j + 1] = startY + .15 + (1 - mapOut) * .28; q[j + 2] = startZ + Math.cos(i * 7.11 + t) * .10 * mapOut; }
   outGeo.attributes.position.needsUpdate = true; outMat.uniforms.uOpacity.value = 0;
   const camIn = smooth(t / .75); camera.position.copy(inheritedCamera).lerp(new THREE.Vector3(0, 22.5, 25.5), camIn); aim.copy(inheritedAim).lerp(new THREE.Vector3(0, 0, 0), camIn); camera.lookAt(aim);
-  camera.position.x += Math.sin(t * .20) * .24; camera.position.z += Math.cos(t * .16) * .18; camera.lookAt(aim);
+  camera.position.x += Math.sin(t * .20) * .24; camera.position.z += Math.cos(t * .16) * .18; camera.lookAt(aim); camera.updateMatrixWorld(true);
+  world.setDetection(t, win(t, 4.65, 10.72, .40, .28) * cityIn * cityOut, Math.max(0, (t - 5.8) / .55));
   stars.rotation.y = inheritedStar + t * .0010; stars.rotation.x = Math.sin(t * .05) * .006;
   renderer.render(scene, camera); window.__sceneTime = t;
   if (t >= DURATION - 1 / FPS) window.__V5_WORLD_EXIT_FIELD = { count: OUT, positions: new Float32Array(outPos), colors: new Float32Array(outColors), cameraPosition: camera.position.clone(), cameraTarget: aim.clone(), starRotationY: stars.rotation.y };
