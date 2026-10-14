@@ -1,377 +1,123 @@
 import * as THREE from '../assets/vendor/three.module.js';
+import { C, clamp, smooth, win, basicMat, makeText, setTextAlpha, setAlpha, makeMapParticleTargets, createAutoDriveWorld, createProbabilityHud } from './v5_autodrive_world.js';
 
-// V5 Task 4: Autonomous learning, 01:22–01:50 (28 seconds).
-// A literal marble-and-ramp experiment anchors the hypothesis / test / observation / revision loop.
-const FPS = 24;
-const DURATION = 28.0;
-const BLACK = 0x02050b;
-const CYAN = 0x55e5ff;
-const ICE = 0xe6fbff;
-const BLUE = 0x318aff;
-const GOLD = 0xffcf72;
-const GREEN = 0x74e7ad;
-const RED = 0xff3854;
-const DARK = 0x132536;
-const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
-const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
-const alphaWindow = (t, start, end, fi = 0.35, fo = 0.35) => smooth((t - start) / fi) * (1 - smooth((t - end) / fo));
-let seed = 20261013;
-function random() { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; }
-const rr = (a, b) => a + (b - a) * random();
-
+// V5 Task 4: Autonomous learning, 01:22–01:50.
+// This is the same trip, same protest and same city from Task 3, continued in a
+// cyber-tactical visual language: identify -> predict -> test -> notice mismatch -> reroute.
+const FPS = 24, DURATION = 28.0;
 const host = document.getElementById('canvas-container');
 if (!host) throw new Error('V5 canvas container is missing.');
 const standalone = !window.__V5_SHARED_RENDERER;
 const renderer = window.__V5_SHARED_RENDERER || new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-renderer.setClearColor(BLACK, 1);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5)); renderer.setClearColor(C.black, 1); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1;
 if (standalone) host.appendChild(renderer.domElement);
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(BLACK);
-scene.fog = new THREE.FogExp2(BLACK, 0.0045);
-const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 280);
-scene.add(camera);
-const cameraAim = new THREE.Vector3(0, 0.25, 0);
-const UP = new THREE.Vector3(0, 1, 0);
-
-function mat(color, opacity = 1, additive = true, depthTest = true) {
-  const m = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, depthTest, toneMapped: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending });
-  m.userData.baseOpacity = opacity;
-  return m;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(C.black); scene.fog = new THREE.FogExp2(C.black, 0.0032);
+const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 300); scene.add(camera);
+const aim = new THREE.Vector3(0, 0, 0);
+let seed = 20261041; function random() { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; }
+function makeStars() {
+  let geo = window.__V5_SHARED_STAR_GEOMETRY;
+  if (!geo) { const n = 760, p = new Float32Array(n * 3), c = new Float32Array(n * 3); for (let i = 0; i < n; i++) { p.set([(random() - .5) * 84, (random() - .5) * 52, -24 - random() * 96], i * 3); const q = new THREE.Color(i % 19 ? 0x3f91b0 : 0x78baff); c.set([q.r * .42, q.g * .42, q.b * .42], i * 3); } geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(p, 3)); geo.setAttribute('color', new THREE.BufferAttribute(c, 3)); }
+  const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, uniforms: { uSize: { value: 4.8 }, uOpacity: { value: .5 } }, vertexShader: 'attribute vec3 color; varying vec3 vColor; uniform float uSize; void main(){vColor=color;vec4 v=modelViewMatrix*vec4(position,1.0);gl_Position=projectionMatrix*v;gl_PointSize=uSize*42.0/max(1.0,-v.z);}', fragmentShader: 'varying vec3 vColor; uniform float uOpacity; void main(){float d=length(gl_PointCoord-vec2(.5));float a=1.0-smoothstep(.08,.5,d);gl_FragColor=vec4(vColor,a*uOpacity);}' });
+  const s = new THREE.Points(geo, m); scene.add(s); return s;
 }
-function pointMat(size, opacity) {
-  return new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
-    uniforms: { uSize: { value: size }, uOpacity: { value: opacity } },
-    vertexShader: `attribute vec3 color; varying vec3 vColor; uniform float uSize; void main(){vColor=color;vec4 v=modelViewMatrix*vec4(position,1.0);gl_Position=projectionMatrix*v;gl_PointSize=uSize*42.0/max(1.0,-v.z);}`,
-    fragmentShader: `varying vec3 vColor; uniform float uOpacity; void main(){float d=length(gl_PointCoord-vec2(0.5));float a=1.0-smoothstep(0.08,0.5,d);gl_FragColor=vec4(vColor,a*uOpacity);}`,
-  });
-}
-function group(parent, name = '') { const g = new THREE.Group(); g.name = name; parent.add(g); return g; }
-function mesh(parent, geometry, color, opacity = 1, additive = true) { const o = new THREE.Mesh(geometry, mat(color, opacity, additive)); parent.add(o); return o; }
-function sphere(parent, radius, color, opacity = 1, additive = true, segments = 20) { return mesh(parent, new THREE.SphereGeometry(radius, segments, Math.max(8, Math.round(segments * 0.7))), color, opacity, additive); }
-function box(parent, x, y, z, color, dims, opacity = 1, additive = false) { const o = mesh(parent, new THREE.BoxGeometry(...dims), color, opacity, additive); o.position.set(x, y, z); return o; }
-function beam(parent, a, b, radius, color, opacity = 0.8, additive = true) {
-  const from = a.clone(), to = b.clone(), d = to.clone().sub(from), length = d.length();
-  const o = mesh(parent, new THREE.CylinderGeometry(radius, radius, length, 12, 1), color, opacity, additive);
-  o.position.copy(from).add(to).multiplyScalar(0.5); o.quaternion.setFromUnitVectors(UP, d.normalize());
-  return o;
-}
-function tube(parent, curve, radius, color, opacity = 0.8) { return mesh(parent, new THREE.TubeGeometry(curve, 56, radius, 10, false), color, opacity, true); }
-function setAlpha(g, value) {
-  const a = clamp(value);
-  g.traverse(o => { if (!o.material) return; const ms = Array.isArray(o.material) ? o.material : [o.material]; for (const m of ms) m.opacity = (m.userData.baseOpacity ?? 1) * a; });
-}
-function text(parent, value, { width = 8, size = 72, color = '#e6fbff', glow = '#55e5ff', x = 0, y = 0, z = 0, weight = 800 } = {}) {
-  const canvas = document.createElement('canvas'); canvas.width = 2048; canvas.height = 300;
-  const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `${weight} ${size}px Arial, sans-serif`;
-  ctx.lineJoin = 'round'; ctx.shadowColor = glow; ctx.shadowBlur = 20; ctx.strokeStyle = 'rgba(1,5,12,.88)'; ctx.lineWidth = 16;
-  ctx.strokeText(value, canvas.width / 2, canvas.height / 2, canvas.width - 60); ctx.fillStyle = color; ctx.fillText(value, canvas.width / 2, canvas.height / 2, canvas.width - 60);
-  const tex = new THREE.CanvasTexture(canvas); tex.colorSpace = THREE.SRGBColorSpace;
-  const material = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false, opacity: 0 }); material.userData.baseOpacity = 1;
-  const s = new THREE.Sprite(material); s.scale.set(width, width * canvas.height / canvas.width, 1); s.position.set(x, y, z); s.renderOrder = 8; parent.add(s); return s;
-}
-function textAlpha(s, value) { s.material.opacity = clamp(value); }
-
-// Shared deep-space star volume and the exact particle/camera handoff from Task 3.
-let starGeometry = window.__V5_SHARED_STAR_GEOMETRY;
-if (!starGeometry) {
-  const count = 760, p = new Float32Array(count * 3), c = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) { p.set([rr(-42, 42), rr(-25, 25), rr(-120, -24)], i * 3); const q = new THREE.Color(i % 19 === 0 ? 0x78baff : 0x3f91b0); c.set([q.r * 0.46, q.g * 0.46, q.b * 0.46], i * 3); }
-  starGeometry = new THREE.BufferGeometry(); starGeometry.setAttribute('position', new THREE.BufferAttribute(p, 3)); starGeometry.setAttribute('color', new THREE.BufferAttribute(c, 3));
-}
-const stars = new THREE.Points(starGeometry, pointMat(5.2, 0.78)); scene.add(stars);
-let inheritedCamera = new THREE.Vector3(1.4, 0.55, 24.2), inheritedAim = new THREE.Vector3(0, 0.1, 0), inheritedStarRotation = 0.09;
-
-// Four large, readable stages form one tilted 3D path. The physical experiment stays in the center.
-const loop = group(scene, 'hypothesis experiment observation revision loop');
-loop.scale.set(0.84, 0.82, 0.82);
-const nodeDefs = [
-  { name: 'HYPOTHESIS', p: new THREE.Vector3(-7.3, 2.4, 2.0), label: new THREE.Vector3(-7.3, 3.48, 2.0) },
-  { name: 'EXPERIMENT', p: new THREE.Vector3(0, 5.3, -2.1), label: new THREE.Vector3(0, 6.25, -2.1) },
-  { name: 'OBSERVATION', p: new THREE.Vector3(7.3, 2.4, 2.0), label: new THREE.Vector3(7.3, 3.48, 2.0) },
-  { name: 'REVISION', p: new THREE.Vector3(0, -4.95, 4.4), label: new THREE.Vector3(0, -6.05, 4.4) },
-];
-const loopCurve = new THREE.CatmullRomCurve3(nodeDefs.map(d => d.p), true, 'centripetal');
-const loopBase = tube(loop, loopCurve, 0.055, 0x153347, 0.62);
-const loopGlow = tube(loop, loopCurve, 0.024, CYAN, 0.12);
-const loopNodes = nodeDefs.map((d, i) => {
-  const g = group(loop, d.name);
-  const core = sphere(g, 0.48, i === 2 ? GOLD : CYAN, 0.88, true);
-  const halo = mesh(g, new THREE.TorusGeometry(0.78, 0.09, 12, 48), i === 2 ? GOLD : CYAN, 0.42, true); halo.rotation.x = 0.12;
-  const cap = sphere(g, 0.19, ICE, 0.95, true); cap.position.z = 0.32;
-  g.position.copy(d.p);
-  const label = text(g, d.name, { width: 6.1, size: 112, color: '#d9f8ff', glow: '#55e5ff', x: d.label.x - d.p.x, y: d.label.y - d.p.y, z: 0.1 });
-  return { group: g, core, halo, label };
-});
-const loopPulse = group(scene, 'learning loop signal');
-sphere(loopPulse, 0.34, ICE, 1, true, 24); sphere(loopPulse, 0.56, CYAN, 0.16, true, 20);
-
-// Concrete experiment: a ball, a ramp, a visible target, and one variable changed after failure.
-const rig = group(scene, 'marble ramp test');
-rig.scale.setScalar(1.2);
-box(rig, 0, -3.55, 0, 0x102233, [13.5, 0.54, 5.2], 0.92, false);
-box(rig, 0, -3.85, 0, 0x08131d, [14.0, 0.18, 5.6], 0.9, false);
-const rampPivot = group(rig, 'adjustable ramp'); rampPivot.position.set(-4.5, 0.72, 0.2);
-const rampDeck = box(rampPivot, 3.62, 0, 0, 0x315a77, [7.25, 0.28, 1.65], 0.98, false); rampDeck.material.color.setHex(0x23445c);
-const rampTop = box(rampPivot, 3.62, 0.18, 0, 0x63dfff, [7.05, 0.07, 1.34], 0.9, true);
-for (const side of [-0.78, 0.78]) { const rail = box(rampPivot, 3.62, 0.37, side, side > 0 ? CYAN : 0x396078, [7.18, 0.34, 0.14], 0.9, side > 0); rail.rotation.z = 0; }
-rampPivot.rotation.z = -0.22;
-const startMarker = box(rig, -5.12, 1.22, 0.45, GOLD, [0.16, 0.92, 1.72], 0.9, false);
-const targetRing = mesh(rig, new THREE.TorusGeometry(0.58, 0.13, 12, 48), GREEN, 0.9, true); targetRing.rotation.x = 0.08;
-const targetCore = sphere(rig, 0.12, GREEN, 0.86, true);
-const targetPost = box(rig, 0, 0, 0, 0x396078, [0.16, 1.28, 0.16], 0.88, false);
-const targetPostFar = box(rig, 0, 0, 0, 0x396078, [0.16, 1.28, 0.16], 0.88, false);
-const targetFlag = box(rig, 0, 0, 0, GREEN, [1.72, 0.16, 0.16], 0.9, true);
-const startLabel = text(rig, 'START', { width: 2.5, size: 88, color: '#ffe0a4', glow: '#ffcf72', x: -5.0, y: 2.05, z: 1.2 });
-const goalLabel = text(rig, 'GOAL', { width: 2.7, size: 90, color: '#c4ffe0', glow: '#74e7ad', x: 1.5, y: 1.55, z: 1.2 });
-const trackLabel = text(rig, 'MARBLE RAMP TEST', { width: 6.2, size: 94, color: '#d9f8ff', glow: '#55e5ff', x: 0, y: -2.65, z: 2.9 });
-const marble = group(rig, 'test marble'); const marbleCore = sphere(marble, 0.64, 0xf6fbff, 0.98, true, 28); sphere(marble, 0.90, CYAN, 0.16, true, 24);
-const expectedDots = [];
-for (let i = 0; i < 14; i++) { const d = sphere(rig, 0.085, CYAN, 0.68, true, 12); expectedDots.push(d); }
-const actualDots = [];
-for (let i = 0; i < 8; i++) { const d = sphere(rig, 0.075, GOLD, 0.0, true, 12); actualDots.push(d); }
-const failX = group(rig, 'missed target');
-for (const angle of [Math.PI / 4, -Math.PI / 4]) { const bar = box(failX, 0, 0, 0, RED, [0.18, 1.0, 0.18], 0.9, true); bar.rotation.z = angle; }
-const markLight = sphere(rig, 0.2, RED, 0.0, true);
-
-function rampPoint(progress, angle) {
-  return new THREE.Vector3(-4.5 + 7.25 * progress * Math.cos(angle), 0.72 + 7.25 * progress * Math.sin(angle) + 0.48, 0.52);
-}
-function setTarget(angle) {
-  const p = rampPoint(0.83, angle); targetRing.position.copy(p); targetRing.rotation.z = angle; targetCore.position.copy(p);
-  targetPost.position.set(p.x - 0.78, p.y + 0.42, p.z); targetPost.rotation.z = angle;
-  targetPostFar.position.set(p.x + 0.78, p.y + 0.42, p.z); targetPostFar.rotation.z = angle;
-  targetFlag.position.set(p.x, p.y + 1.04, p.z); targetFlag.rotation.z = angle;
-  goalLabel.position.set(p.x, p.y + 1.55, p.z + 0.5);
-}
-setTarget(-0.22);
-
-// A clear left-to-right timeline shows the same test succeeding once, then failing later.
-const logbook = group(scene, 'same test over time');
-const logCover = box(logbook, 0, 0, 0, 0x112333, [7.2, 3.9, 0.24], 0.74, false);
-const logSpine = box(logbook, 0, 0.05, 0.18, CYAN, [4.95, 0.075, 0.10], 0.72, true);
-const logArrow = mesh(logbook, new THREE.ConeGeometry(0.19, 0.42, 3), CYAN, 0.88, true); logArrow.position.set(2.48, 0.05, 0.28); logArrow.rotation.z = -Math.PI / 2;
-const logTitle = text(logbook, 'SAME TEST · OVER TIME', { width: 6.7, size: 86, x: 0, y: 1.25, z: 0.38 });
-const row1 = text(logbook, 'MISS', { width: 5.2, size: 112, color: '#ff9aa9', glow: '#ff3854', x: -1.72, y: -1.15, z: 0.4 });
-const row2 = text(logbook, 'HIT', { width: 5.2, size: 112, color: '#b7ffe0', glow: '#74e7ad', x: 0, y: -1.15, z: 0.4 });
-const row3 = text(logbook, 'MISS', { width: 5.2, size: 112, color: '#ff9aa9', glow: '#ff3854', x: 1.72, y: -1.15, z: 0.4 });
-function outcomeMark(x, success) {
-  const g = group(logbook, success ? 'hit target' : 'miss target'); g.position.set(x, 0.05, 0.42);
-  if (success) { const a = box(g, -0.13, -0.03, 0, GREEN, [0.14, 0.48, 0.12], 0.96, true); a.rotation.z = -0.68; const b = box(g, 0.12, 0.10, 0, GREEN, [0.14, 0.88, 0.12], 0.96, true); b.rotation.z = 0.66; }
-  else { const a = box(g, 0, 0, 0, RED, [0.15, 0.78, 0.12], 0.96, true); a.rotation.z = Math.PI / 4; const b = box(g, 0, 0, 0, RED, [0.15, 0.78, 0.12], 0.96, true); b.rotation.z = -Math.PI / 4; }
-  return g;
-}
-const outcomeMarks = [outcomeMark(-1.72, false), outcomeMark(0, true), outcomeMark(1.72, false)];
-logbook.position.set(5.4, -1.0, 4.0); logbook.rotation.y = -0.08;
-
-// Three tangible candidate tests branch from the next-investigation decision.
-const choices = [];
-function choiceOption(label, y, kind) {
-  const g = group(scene, `candidate test ${label}`); g.position.set(10.1, y, 4.2);
-  const panel = box(g, 0, 0, 0, 0x112334, [3.7, 1.72, 0.22], 0.9, false);
-  const rim = mesh(g, new THREE.BoxGeometry(3.86, 1.88, 0.10), CYAN, 0.72, true); rim.material.wireframe = false; rim.material.opacity = 0.14;
-  if (kind === 'slope') { const plank = box(g, -0.2, -0.05, 0.28, 0x5adcf5, [1.72, 0.20, 0.72], 0.92, false); plank.rotation.z = -0.42; }
-  if (kind === 'surface') { box(g, -0.20, -0.25, 0.28, 0x315a77, [1.75, 0.18, 0.88], 0.95, false); for (let j = 0; j < 4; j++) box(g, -0.82 + j * 0.40, -0.10, 0.38, GOLD, [0.10, 0.28, 0.78], 0.9, true); }
-  if (kind === 'mass') { sphere(g, 0.32, ICE, 0.96, true, 20).position.set(-0.48, -0.02, 0.36); sphere(g, 0.52, GOLD, 0.96, true, 20).position.set(0.48, -0.02, 0.36); }
-  const labelSprite = text(g, label, { width: 3.4, size: 102, x: 0, y: -0.60, z: 0.46 });
-  choices.push({ group: g, panel, rim, label: labelSprite, selected: kind === 'surface' });
-}
-choiceOption('SLOPE', 3.25, 'slope'); choiceOption('SURFACE', 0.0, 'surface'); choiceOption('MASS', -3.25, 'mass');
-const branchPulses = choices.map(() => sphere(scene, 0.22, ICE, 0.95, true, 18));
-const branchRoutes = choices.map(c => {
-  const start = nodeDefs[2].p.clone().multiply(loop.scale);
-  const end = c.group.position.clone().add(new THREE.Vector3(0, 0, 0.5));
-  const mid = start.clone().lerp(end, 0.56).add(new THREE.Vector3(0.35, 0, 0.8));
-  return tube(scene, new THREE.CatmullRomCurve3([start, mid, end]), 0.045, CYAN, 0.34);
-});
-
-// The same experiment meets a plainly visible new obstacle; the ball rolls into it and stops.
-const unknownCase = group(scene, 'unfamiliar case with new obstacle'); unknownCase.position.set(5.25, -0.35, 5.3); unknownCase.scale.setScalar(1.48);
-box(unknownCase, 0, -1.08, 0, 0x26384a, [4.9, 0.34, 1.95], 0.9, false);
-const oddRamp = box(unknownCase, -0.42, -0.02, 0, 0x40627a, [3.35, 0.30, 1.10], 0.96, false); oddRamp.rotation.z = -0.28;
-const unknownLeg = box(unknownCase, -0.15, -0.60, 0.02, 0x54728a, [0.26, 1.42, 0.25], 0.92, false); unknownLeg.rotation.z = -0.15;
-const unknownFoot = box(unknownCase, -0.20, -1.03, 0.02, CYAN, [1.10, 0.13, 1.25], 0.8, false);
-const unknownBall = sphere(unknownCase, 0.46, GOLD, 0.98, true, 26); unknownBall.position.set(-1.55, 0.66, 0.43);
-const unknownBlock = box(unknownCase, 0.85, -0.03, 0.42, 0xb84450, [0.78, 1.02, 1.02], 0.94, false);
-for (let i = 0; i < 3; i++) { const stripe = box(unknownCase, 0.85, -0.33 + i * 0.30, 0.95, GOLD, [0.80, 0.10, 0.05], 0.96, true); stripe.rotation.z = -0.28; }
-const unknownLabel = text(unknownCase, 'NEW OBSTACLE', { width: 4.5, size: 72, color: '#ffe0a4', glow: '#ffcf72', x: 0.9, y: 1.15, z: 1.0 });
-
-// A compact visual intake contrasts passive information with active experimentation.
-const intake = group(scene, 'information archive'); intake.position.set(-10.3, -0.5, 3.6);
-for (let i = 0; i < 3; i++) { const page = box(intake, i * 0.18, 0.06 + i * 0.10, i * 0.05, 0x1b3e55, [2.4, 2.55, 0.12], 0.86, false); page.rotation.z = -0.04 * i; for (let r = 0; r < 4; r++) box(intake, -0.12 + i * 0.18, 0.60 - r * 0.38 + i * 0.1, 0.12 + i * 0.05, r % 2 ? CYAN : BLUE, [1.38 - (r % 2) * 0.14, 0.075, 0.035], 0.76, true); }
-const intakeLabel = text(intake, 'INFORMATION', { width: 3.5, size: 48, x: 0.15, y: -1.65, z: 0.5 });
-const intakeBits = [];
-for (let i = 0; i < 24; i++) { const b = sphere(scene, rr(0.07, 0.13), i % 3 ? BLUE : CYAN, 0.82, true, 12); intakeBits.push({ mesh: b, phase: i / 24, offset: rr(-0.55, 0.55) }); }
+const stars = makeStars(); const world = createAutoDriveWorld(THREE, scene, camera); const probabilities = createProbabilityHud(THREE, camera);
 
 const headlines = {
-  information: text(scene, 'INFORMATION ISN’T ENOUGH', { width: 15.0, size: 74, y: 7.72 }),
-  hypothesis: text(scene, 'WILL THE MARBLE REACH THE GOAL?', { width: 16.0, size: 68, y: 7.72 }),
-  failure: text(scene, 'THE MARBLE STOPS SHORT', { width: 14.8, size: 72, color: '#ffd9df', glow: '#ff3854', y: 7.72 }),
-  revision: text(scene, 'RAISE THE RAMP · RETEST', { width: 14.0, size: 70, color: '#e6fbff', glow: '#55e5ff', y: 7.72 }),
-  ai: text(scene, 'AI CAN DO PARTS', { width: 11.6, size: 76, y: 7.72 }),
-  lasting: text(scene, 'DOES LEARNING LAST?', { width: 13.2, size: 74, color: '#ffe5b1', glow: '#ffcf72', y: 7.72 }),
-  next: text(scene, 'WHAT SHOULD IT TEST NEXT?', { width: 15.0, size: 70, y: 7.72 }),
-  correct: text(scene, 'CAN IT CORRECT ITS OWN ERROR?', { width: 16.0, size: 66, color: '#ffd9df', glow: '#ff3854', y: 7.72 }),
-  challenge: text(scene, 'NEW CONDITIONS CAN BREAK THE RULE', { width: 17.0, size: 64, color: '#ffe5b1', glow: '#ffcf72', y: 7.72 }),
+  information: makeText(THREE, camera, 'INFORMATION IS ONLY THE INPUT', { width: 12.5, size: 58, x: 0, y: 3.75, z: -14 }),
+  identify: makeText(THREE, camera, 'IDENTIFYING...', { width: 9.6, size: 84, color: '#e4fbff', glow: '#55e5ff', x: 0, y: 4.15, z: -14 }),
+  predict: makeText(THREE, camera, 'PREDICTING MULTIPLE ROUTE OUTCOMES', { width: 13.6, size: 49, x: 0, y: 3.75, z: -14 }),
+  mismatch: makeText(THREE, camera, 'REALITY CHANGED: THE PROTEST MOVED', { width: 14.0, size: 50, color: '#ffdce2', glow: '#ff3854', x: 0, y: 3.75, z: -14 }),
+  revise: makeText(THREE, camera, 'REROUTE: ROUTE A IS NOW THE BEST CHANCE', { width: 14.0, size: 47, color: '#d6ffea', glow: '#74e7ad', x: 0, y: 3.75, z: -14 }),
+  partial: makeText(THREE, camera, 'AI CAN PERFORM PARTS OF THIS PROCESS', { width: 13.5, size: 51, x: 0, y: 3.75, z: -14 }),
+  longTerm: makeText(THREE, camera, 'DOES THE LEARNING LAST OVER MANY TRIPS?', { width: 14.0, size: 48, color: '#ffe5b1', glow: '#ffcf72', x: 0, y: 3.75, z: -14 }),
+  investigate: makeText(THREE, camera, 'NEXT: CHECK WHETHER THE NORTH ROAD IS CLEAR', { width: 14.8, size: 43, x: 0, y: 3.75, z: -14 }),
+  correct: makeText(THREE, camera, 'BRAKE. RECHECK. CHOOSE A SAFER ROUTE.', { width: 13.6, size: 48, color: '#d6ffea', glow: '#74e7ad', x: 0, y: 3.75, z: -14 }),
+  challenge: makeText(THREE, camera, 'RELIABLE SELF-CORRECTION REMAINS HARD', { width: 14.6, size: 46, color: '#ffe5b1', glow: '#ffcf72', x: 0, y: 3.75, z: -14 }),
 };
+const sourceLabels = [
+  makeText(THREE, camera, 'LIVE CAMERA  ·  MAP  ·  TRAFFIC FEED', { width: 8.6, size: 43, x: -3.95, y: 2.55, z: -14, align: 'left' }),
+  makeText(THREE, camera, 'DETECT  →  PREDICT  →  ACT', { width: 7.5, size: 44, x: -3.95, y: 1.68, z: -14, align: 'left' }),
+];
 
-// Particle cloud that inherits Task 3's exact final positions, colors and camera state.
-const IN_COUNT = 420, inPositions = new Float32Array(IN_COUNT * 3), inSource = new Float32Array(IN_COUNT * 3), inTarget = new Float32Array(IN_COUNT * 3), inColors = new Float32Array(IN_COUNT * 3);
-const inGeo = new THREE.BufferGeometry(); inGeo.setAttribute('position', new THREE.BufferAttribute(inPositions, 3).setUsage(THREE.DynamicDrawUsage)); inGeo.setAttribute('color', new THREE.BufferAttribute(inColors, 3)); inGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 180);
-const inMat = pointMat(5.4, 0.84), incoming = new THREE.Points(inGeo, inMat); scene.add(incoming);
-for (let i = 0; i < IN_COUNT; i++) { const target = loopCurve.getPointAt(i / IN_COUNT).multiply(loop.scale); inTarget.set([target.x, target.y, target.z], i * 3); inSource.set([rr(-12, 12), rr(-8, 8), rr(-8, 8)], i * 3); inPositions.set(inSource.subarray(i * 3, i * 3 + 3), i * 3); const c = new THREE.Color(i % 3 === 0 ? CYAN : i % 3 === 1 ? BLUE : GOLD); inColors.set([c.r, c.g, c.b], i * 3); }
-let incomingReady = false;
+// Re-form the same city-grid particle field delivered by Task 3, not an unrelated loop.
+const IN = 460, mapTargets = makeMapParticleTargets(IN, 4077), inPos = new Float32Array(IN * 3), inColor = new Float32Array(IN * 3), inSource = new Float32Array(IN * 3);
+const inGeo = new THREE.BufferGeometry(); inGeo.setAttribute('position', new THREE.BufferAttribute(inPos, 3).setUsage(THREE.DynamicDrawUsage)); inGeo.setAttribute('color', new THREE.BufferAttribute(inColor, 3)); inGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 160);
+const inMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, uniforms: { uSize: { value: 5.0 }, uOpacity: { value: .76 } }, vertexShader: 'attribute vec3 color; varying vec3 vColor; uniform float uSize; void main(){vColor=color;vec4 v=modelViewMatrix*vec4(position,1.0);gl_Position=projectionMatrix*v;gl_PointSize=uSize*42.0/max(1.0,-v.z);}', fragmentShader: 'varying vec3 vColor; uniform float uOpacity; void main(){float d=length(gl_PointCoord-vec2(.5));float a=1.0-smoothstep(.08,.5,d);gl_FragColor=vec4(vColor,a*uOpacity);}' });
+const inCloud = new THREE.Points(inGeo, inMat); scene.add(inCloud); let incomingReady = false;
+let inheritedCamera = new THREE.Vector3(0, 22.5, 25.5), inheritedAim = new THREE.Vector3(0, 0, 0), inheritedStar = 0;
 function prepareIncoming() {
-  if (incomingReady) return;
-  const field = window.__V5_WORLD_EXIT_FIELD;
-  if (!field || !field.positions || !field.colors || !field.count) return;
-  for (let i = 0; i < IN_COUNT; i++) { const si = Math.floor((i + 0.5) * field.count / IN_COUNT) * 3, j = i * 3; inSource[j] = field.positions[si]; inSource[j + 1] = field.positions[si + 1]; inSource[j + 2] = field.positions[si + 2]; inPositions[j] = inSource[j]; inPositions[j + 1] = inSource[j + 1]; inPositions[j + 2] = inSource[j + 2]; inColors[j] = field.colors[si]; inColors[j + 1] = field.colors[si + 1]; inColors[j + 2] = field.colors[si + 2]; }
-  inGeo.attributes.position.needsUpdate = true; inGeo.attributes.color.needsUpdate = true;
-  inheritedCamera.copy(field.cameraPosition || inheritedCamera); inheritedAim.copy(field.cameraTarget || inheritedAim); inheritedStarRotation = Number.isFinite(field.starRotationY) ? field.starRotationY : inheritedStarRotation; incomingReady = true;
+  if (incomingReady) return; const field = window.__V5_WORLD_EXIT_FIELD;
+  for (let i = 0; i < IN; i++) { const j = i * 3; if (field?.positions && field.count) { const k = Math.floor((i + .5) * field.count / IN) * 3; inSource.set(field.positions.subarray(k, k + 3), j); inPos.set(field.positions.subarray(k, k + 3), j); if (field.colors) inColor.set(field.colors.subarray(k, k + 3), j); } else { inSource.set([mapTargets[j] + (random() - .5) * 3, 0.4 + random() * 3, mapTargets[j + 2] + (random() - .5) * 3], j); inPos.set(inSource.subarray(j, j + 3), j); const c = new THREE.Color(i % 4 ? C.cyan : C.green); inColor.set([c.r, c.g, c.b], j); } }
+  if (field?.cameraPosition) inheritedCamera.copy(field.cameraPosition); if (field?.cameraTarget) inheritedAim.copy(field.cameraTarget); inheritedStar = Number.isFinite(field?.starRotationY) ? field.starRotationY : 0;
+  inGeo.attributes.position.needsUpdate = true; inGeo.attributes.color.needsUpdate = true; incomingReady = true;
 }
+const OUT = 460, outTarget = makeMapParticleTargets(OUT, 4077), outPos = new Float32Array(OUT * 3), outColors = new Float32Array(OUT * 3);
+const outGeo = new THREE.BufferGeometry(); outGeo.setAttribute('position', new THREE.BufferAttribute(outPos, 3).setUsage(THREE.DynamicDrawUsage)); outGeo.setAttribute('color', new THREE.BufferAttribute(outColors, 3)); outGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 160);
+const outMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, uniforms: { uSize: { value: 5.0 }, uOpacity: { value: 0 } }, vertexShader: 'attribute vec3 color; varying vec3 vColor; uniform float uSize; void main(){vColor=color;vec4 v=modelViewMatrix*vec4(position,1.0);gl_Position=projectionMatrix*v;gl_PointSize=uSize*42.0/max(1.0,-v.z);}', fragmentShader: 'varying vec3 vColor; uniform float uOpacity; void main(){float d=length(gl_PointCoord-vec2(.5));float a=1.0-smoothstep(.08,.5,d);gl_FragColor=vec4(vColor,a*uOpacity);}' });
+const outCloud = new THREE.Points(outGeo, outMat); scene.add(outCloud);
+for (let i = 0; i < OUT; i++) { const c = new THREE.Color(i % 5 === 0 ? C.green : i % 3 === 0 ? C.yellow : C.cyan); outColors.set([c.r, c.g, c.b], i * 3); outPos.set(outTarget.subarray(i * 3, i * 3 + 3), i * 3); }
 
-const OUT_COUNT = 420, outPos = new Float32Array(OUT_COUNT * 3), outColors = new Float32Array(OUT_COUNT * 3), outData = [];
-const outGeo = new THREE.BufferGeometry(); outGeo.setAttribute('position', new THREE.BufferAttribute(outPos, 3).setUsage(THREE.DynamicDrawUsage)); outGeo.setAttribute('color', new THREE.BufferAttribute(outColors, 3)); outGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 180);
-const outMat = pointMat(5.2, 0.68), outgoing = new THREE.Points(outGeo, outMat); scene.add(outgoing);
-for (let i = 0; i < OUT_COUNT; i++) { const u = i / OUT_COUNT, p = loopCurve.getPointAt(u); outData.push({ source: p.clone().add(new THREE.Vector3(rr(-2.5, 2.5), rr(-2.3, 2.3), rr(-1.0, 1.0))), end: new THREE.Vector3(rr(-24, 24), rr(-14, 14), rr(-12, 12)) }); const c = new THREE.Color(i % 4 === 0 ? GOLD : i % 3 === 0 ? GREEN : CYAN); outColors.set([c.r, c.g, c.b], i * 3); }
+// The incident log makes long-term reliability concrete: predicted chance vs what actually happened.
+function historyRow(y, label, color) {
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(6.2, .82, .12), basicMat(0x0b1926, .93, false)); panel.position.set(-5.05, y, -14.05); camera.add(panel);
+  const accent = new THREE.Mesh(new THREE.BoxGeometry(.10, .68, .04), basicMat(color, .96, true)); accent.position.set(-8.02, y, -13.92); camera.add(accent);
+  const text = makeText(THREE, camera, label, { width: 5.9, size: 36, color: '#e6fbff', glow: color === C.red ? '#ff3854' : color === C.green ? '#74e7ad' : '#ffcf72', x: -5.0, y, z: -13.88, align: 'left' });
+  return { panel, accent, text };
+}
+const logTitle = makeText(THREE, camera, 'SAME CITY · DIFFERENT TRIPS', { width: 6.2, size: 39, color: '#ffe5b1', glow: '#ffcf72', x: -5.0, y: 1.62, z: -13.86, align: 'left' });
+const tripRows = [historyRow(.78, 'TRIP 01   ROUTE B   BLOCKED', C.red), historyRow(-.16, 'TRIP 02   ROUTE C   +4 MIN', C.yellow), historyRow(-1.10, 'TRIP 03   82%   ROUTE A ON TIME', C.green)];
+const routeBeacon = new THREE.Mesh(new THREE.TorusGeometry(.64, .07, 8, 40), basicMat(C.cyan, .92, true)); routeBeacon.rotation.x = Math.PI / 2; routeBeacon.position.set(5, .26, 5); world.city.add(routeBeacon);
+const probe = new THREE.Mesh(new THREE.SphereGeometry(.22, 16, 12), basicMat(C.ice, .98, true)); probe.position.set(5, 1.15, 5); world.city.add(probe);
+const investigateTag = makeText(THREE, world.city, 'CHECK NORTH DETOUR', { width: 4.5, size: 62, color: '#dff8ff', x: 5, y: 2.5, z: 4.4 });
 
-function stageWeights(t) {
-  const pulse = [0.48, 0.48, 0.48, 0.48];
-  const windows = [[6.4, 7.95], [8.0, 9.55], [9.55, 11.25], [11.15, 13.22]];
-  for (let i = 0; i < 4; i++) pulse[i] = 0.48 + 0.52 * alphaWindow(t, windows[i][0], windows[i][1], 0.22, 0.22);
-  if (t >= 13.25 && t < 16.95) pulse[0] = 0.95;
-  if (t >= 13.25 && t < 16.95) pulse[1] = 0.95 * (0.5 + 0.5 * Math.sin(t * 2.2));
-  if (t >= 13.25 && t < 16.95) pulse[2] = 0.8;
-  if (t >= 13.25 && t < 16.95) pulse[3] = 0.13; // AI completes some, not all, of the loop.
-  if (t >= 17.4 && t < 20.95) for (let i = 0; i < 4; i++) pulse[i] = 0.4 + 0.58 * (0.5 + 0.5 * Math.sin(t * 2.1 - i * 1.4));
-  if (t >= 21.15 && t < 23.65) { pulse[0] = 0.48; pulse[1] = 0.66; pulse[2] = 0.92; pulse[3] = 0.3; }
-  if (t >= 23.65) { pulse[0] = 0.3; pulse[1] = 0.18; pulse[2] = 0.78; pulse[3] = 0.14; }
-  return pulse;
+function setHeadlines(t) {
+  const windows = {
+    information: [0, 3.25], identify: [3.30, 6.25], predict: [6.3, 9.55], mismatch: [9.55, 11.35], revise: [11.35, 13.2], partial: [13.2, 17.05], longTerm: [17.15, 21.12], investigate: [21.12, 23.62], correct: [23.62, 26.0], challenge: [25.92, 28.0],
+  };
+  for (const [key, s] of Object.entries(headlines)) { const [a, b] = windows[key]; setTextAlpha(s, win(t, a, b, .18, .18)); }
+  sourceLabels.forEach(s => setTextAlpha(s, win(t, .25, 3.2, .20, .25)));
+  setTextAlpha(logTitle, win(t, 17.2, 21.1, .22, .24));
+  tripRows.forEach((r, i) => { const a = win(t, 17.4 + i * .5, 21.1, .20, .25); r.panel.material.opacity = .93 * a; r.accent.material.opacity = .96 * a; setTextAlpha(r.text, a); });
+  const explore = win(t, 21.1, 23.62, .22, .22); setTextAlpha(investigateTag, explore);
+  routeBeacon.material.opacity = .92 * explore * (.55 + .45 * Math.sin(t * 5) ** 2); probe.material.opacity = .98 * explore;
 }
-function updateIncoming(t) {
-  const form = smooth(t / 1.15), p = inGeo.attributes.position.array;
-  for (let i = 0; i < IN_COUNT; i++) { const j = i * 3, q = form; p[j] = THREE.MathUtils.lerp(inSource[j], inTarget[j], q); p[j + 1] = THREE.MathUtils.lerp(inSource[j + 1], inTarget[j + 1], q); p[j + 2] = THREE.MathUtils.lerp(inSource[j + 2], inTarget[j + 2], q); }
-  inGeo.attributes.position.needsUpdate = true; inMat.uniforms.uOpacity.value = 0.76 * (1 - smooth((t - 1.12) / 0.58));
-}
-function updateRig(t, rigAlpha) {
-  const angleMix = smooth((t - 11.42) / 0.72), angle = THREE.MathUtils.lerp(-0.22, -0.36, angleMix);
-  rampPivot.rotation.z = angle; setTarget(angle);
-  const firstRun = smooth((t - 8.02) / 1.36), secondRun = smooth((t - 12.02) / 0.98);
-  const firstP = Math.min(0.35, firstRun * 0.35), secondP = 0.83 * secondRun;
-  const reset = smooth((t - 11.40) / 0.62);
-  let progress = t < 11.42 ? firstP : THREE.MathUtils.lerp(0.35, secondP, reset);
-  if (t > 13.0) progress = 0.83;
-  const repeatFailure = alphaWindow(t, 23.72, 26.08, 0.18, 0.22);
-  if (repeatFailure > 0) progress = THREE.MathUtils.lerp(0.83, 0.35, smooth((t - 23.72) / 0.55));
-  const ballA = Math.max(alphaWindow(t, 6.2, 16.75, 0.3, 0.55), repeatFailure);
-  marble.visible = ballA > 0.005; marble.position.copy(rampPoint(progress, angle));
-  marble.rotation.x = t * 2.1; marble.rotation.z = -angle + Math.sin(t * 4.2) * 0.03;
-  const mismatch = (t >= 9.55 && t < 11.4) || repeatFailure > 0.08;
-  targetRing.material.color.setHex(mismatch ? RED : GREEN);
-  targetCore.material.color.setHex(mismatch ? RED : GREEN);
-  const tp = rampPoint(0.83, angle); markLight.position.copy(tp); markLight.material.opacity = rigAlpha * (mismatch ? 0.9 * repeatFailure + (t >= 9.55 && t < 11.4 ? 0.9 : 0) : 0.0);
-  failX.position.copy(tp).add(new THREE.Vector3(0.45, 0.65, 0.35));
-  const predictedA = alphaWindow(t, 6.45, 9.6, 0.32, 0.28);
-  for (let i = 0; i < expectedDots.length; i++) { const u = (i + 1) / (expectedDots.length + 1), pt = rampPoint(0.83 * u, angle); expectedDots[i].position.copy(pt); expectedDots[i].position.y += 0.34; expectedDots[i].material.opacity = 0.72 * predictedA; }
-  const failA = Math.max(alphaWindow(t, 9.55, 11.45, 0.18, 0.22), repeatFailure);
-  failX.material && (failX.visible = failA > 0.02); failX.traverse(o => { if (o.material) o.material.opacity = (o.material.userData.baseOpacity ?? 1) * failA; });
-  for (let i = 0; i < actualDots.length; i++) { const u = (i + 1) / (actualDots.length + 1) * 0.35, pt = rampPoint(u, angle); actualDots[i].position.copy(pt); actualDots[i].position.y += 0.34; actualDots[i].material.opacity = 0.75 * failA; }
-  const revisedA = alphaWindow(t, 11.35, 13.25, 0.22, 0.3);
-  targetRing.material.opacity = 0.9 * ballA * rigAlpha; targetCore.material.opacity = 0.86 * ballA * rigAlpha; targetFlag.material.opacity = 0.75 * ballA * rigAlpha;
-  // The physical fulcrum rises as the hypothesis is revised.
-  const supportY = THREE.MathUtils.lerp(0.25, -0.15, angleMix);
-  supportBase.position.set(-1.55, supportY, 0.08); supportBase.material.opacity = 0.92 * rigAlpha;
-  supportFoot.position.set(-1.55, -3.12, 0.08); supportFoot.material.opacity = 0.82 * rigAlpha;
-  const apex = new THREE.Vector3(-1.55, supportY - 0.22, 0.08);
-  poseSupport(supportLegLeft, new THREE.Vector3(-2.72, -3.02, 0.08), apex);
-  poseSupport(supportLegRight, new THREE.Vector3(-0.38, -3.02, 0.08), apex);
-  if (revisedA > 0.01 && t > 12.0) { const a = rampPoint(0.83, angle); targetRing.material.color.setHex(GREEN); targetCore.material.color.setHex(GREEN); }
-  return { angle, ballA, firstRun, secondRun, failA, predictedA };
-}
-const supportBase = box(rig, -1.55, 0.25, 0.08, 0x355a72, [1.05, 0.35, 1.15], 0.92, false);
-const supportFoot = box(rig, -1.55, -3.12, 0.08, 0x396078, [2.8, 0.16, 1.35], 0.82, false);
-const supportLegLeft = box(rig, 0, 0, 0, 0x41637a, [0.24, 3.6, 0.22], 0.92, false);
-const supportLegRight = box(rig, 0, 0, 0, 0x41637a, [0.24, 3.6, 0.22], 0.92, false);
-function poseSupport(leg, a, b) { const d = b.clone().sub(a); leg.position.copy(a).add(b).multiplyScalar(0.5); leg.rotation.z = Math.atan2(d.x, d.y); leg.scale.y = d.length() / 3.6; }
-
-function updateChoices(t) {
-  const a = alphaWindow(t, 21.18, 23.7, 0.25, 0.28);
-  const obs = nodeDefs[2].p.clone().multiply(loop.scale);
-  const u = smooth((t - 21.3) / 1.5);
-  for (let i = 0; i < choices.length; i++) {
-    const c = choices[i], selected = c.selected;
-    setAlpha(c.group, a * (selected ? 1 : 0.72));
-    c.rim.material.color.setHex(selected ? CYAN : 0x436075);
-    c.rim.material.opacity = a * (selected ? 0.16 : 0.09);
-    c.panel.material.color.setHex(selected ? 0x173b50 : 0x112334);
-    const dest = c.group.position.clone().add(new THREE.Vector3(0, 0, 1.0));
-    const mid = obs.clone().lerp(dest, u).add(new THREE.Vector3(0.35, 0, 0.8 * Math.sin(u * Math.PI)));
-    const pulse = branchPulses[i]; pulse.position.copy(mid); pulse.material.opacity = a * (selected ? 0.95 : 0.28);
-    setAlpha(branchRoutes[i], a * (selected ? 0.72 : 0.24));
-  }
-}
-function updateCamera(t) {
-  if (t < 3.4) {
-    const u = smooth(t / 3.4); camera.position.copy(inheritedCamera).lerp(new THREE.Vector3(0, 0.35, 28.8), u); cameraAim.copy(inheritedAim).lerp(new THREE.Vector3(0, 0.0, 0), u);
-  } else if (t < 13.3) {
-    const q = t - 3.4; camera.position.set(Math.sin(q * 0.16) * 1.15, 0.2 + Math.sin(q * 0.22) * 0.3, 26.5 - smooth(q / 10) * 0.8); cameraAim.set(0, 0, 0);
-  } else if (t < 17.35) {
-    const q = t - 13.3; camera.position.set(1.1 + Math.sin(q * 0.19) * 1.45, 0.25 + Math.sin(q * 0.18) * 0.34, 25.7 - smooth(q / 8) * 0.6); cameraAim.set(0.35, 0.1, 0.3);
-  } else if (t < 21.2) {
-    const u = smooth((t - 17.35) / 3.85); camera.position.set(1.4 + u * 2.1 + Math.sin(t * 0.16) * 0.25, 0.25, 25.1); cameraAim.set(0.35 + u * 2.0, 0.1, 0.3);
-  } else {
-    const u = smooth((t - 21.2) / 5.8); camera.position.set(1.2 + u * 1.6 + Math.sin(t * 0.16) * 0.4, 0.2, 25.0 - 0.25 * u); cameraAim.set(0.6 + u * 1.0, 0, 0.5);
-  }
-  stars.rotation.y = inheritedStarRotation + t * 0.0012; stars.rotation.x = Math.sin(t * 0.055) * 0.008;
+function animateCar(t) {
+  if (t < 7.8) { world.placeCar(2, .07); return; }
+  if (t < 9.55) { world.placeCar(2, .07 + smooth((t - 7.8) / 1.75) * .23); return; }
+  if (t < 11.35) { world.placeCar(2, .30); return; }
+  if (t < 12.15) { world.placeCar(2, THREE.MathUtils.lerp(.30, .05, smooth((t - 11.35) / .8))); return; }
+  if (t < 17.1) { world.placeCar(0, .05 + smooth((t - 12.15) / 4.9) * .28); return; }
+  if (t < 21.1) { world.placeCar(0, .33); return; }
+  if (t < 24.0) { world.placeCar(0, .33); return; }
+  if (t < 25.1) { world.placeCar(0, THREE.MathUtils.lerp(.33, .50, smooth((t - 24.0) / .75))); return; }
+  world.placeCar(0, .50 + smooth((t - 25.1) / 2.7) * .12);
 }
 function renderFrame(frame) {
-  const t = clamp(Number(frame) / FPS, 0, DURATION); prepareIncoming(); updateIncoming(t);
-  let loopA = alphaWindow(t, 0.35, 27.28, 0.48, 0.55);
-  if (t >= 4.8 && t < 13.25) loopA *= 0.68;
-  if (t >= 17.35 && t < 21.2) loopA *= 0.48;
-  setAlpha(loop, loopA);
-  const weights = stageWeights(t);
-  for (let i = 0; i < loopNodes.length; i++) { const w = weights[i]; loopNodes[i].core.material.color.setHex(i === 2 && t > 9.5 && t < 11.4 ? RED : (i === 2 && t > 17.4 ? GOLD : CYAN)); loopNodes[i].halo.material.color.copy(loopNodes[i].core.material.color); setAlpha(loopNodes[i].group, loopA * w); }
-  const partial = t >= 13.25 && t < 16.95;
-  loopGlow.material.opacity = (partial ? 0.25 : 0.5) * loopA;
-  const progress = t < 6.4 ? 0 : t < 13.25 ? clamp((t - 6.4) / 6.85) : t < 17.4 ? clamp((t - 13.25) / 3.7) : (t - 17.4) * 0.42;
-  const pulsePoint = loopCurve.getPointAt(((progress % 1) + 1) % 1).multiply(loop.scale); loopPulse.position.copy(pulsePoint); setAlpha(loopPulse, loopA * (partial ? (progress % 1 < 0.73 ? 0.95 : 0.08) : 0.9));
-
-  const intakeA = 0; setAlpha(intake, intakeA);
-  for (const d of intakeBits) d.mesh.material.opacity = 0;
-  const rigA = alphaWindow(t, 4.8, 26.85, 0.65, 0.55); setAlpha(rig, rigA); const rigState = updateRig(t, rigA);
-  const bookAlpha = alphaWindow(t, 17.35, 21.08, 0.42, 0.35); setAlpha(logbook, bookAlpha); textAlpha(logTitle, bookAlpha); textAlpha(row1, bookAlpha); textAlpha(row2, bookAlpha); textAlpha(row3, bookAlpha);
-  // A third, inconsistent later trial makes the long-term retention problem visible.
-  if (t > 19.55) { row3.material.color.set('#ff9aa9'); }
-  updateChoices(t);
-  const unknownA = alphaWindow(t, 26.0, 28.25, 0.38, 0.42); setAlpha(unknownCase, unknownA);
-  const unknownPulse = smooth((t - 26.45) / 0.8); unknownBall.position.set(-1.55 + unknownPulse * 1.60, 0.66 - unknownPulse * 0.42, 0.43); unknownBlock.material.color.setHex(t > 26.95 ? RED : 0x6d92a7);
-
-  textAlpha(headlines.information, alphaWindow(t, 3.35, 6.25, 0.25, 0.22));
-  textAlpha(headlines.hypothesis, alphaWindow(t, 6.42, 9.52, 0.22, 0.24));
-  textAlpha(headlines.failure, alphaWindow(t, 9.55, 11.4, 0.16, 0.20));
-  textAlpha(headlines.revision, alphaWindow(t, 11.36, 13.18, 0.20, 0.22));
-  textAlpha(headlines.ai, alphaWindow(t, 13.26, 16.95, 0.25, 0.26));
-  textAlpha(headlines.lasting, alphaWindow(t, 17.38, 21.03, 0.24, 0.28));
-  textAlpha(headlines.next, alphaWindow(t, 21.18, 23.68, 0.22, 0.24));
-  textAlpha(headlines.correct, alphaWindow(t, 23.72, 26.12, 0.22, 0.24));
-  textAlpha(headlines.challenge, alphaWindow(t, 26.12, 28.25, 0.24, 0.42));
-
-  const outStart = 27.08, spread = smooth((t - outStart) / 0.75), op = smooth((t - outStart) / 0.18), out = outGeo.attributes.position.array;
-  for (let i = 0; i < OUT_COUNT; i++) { const d = outData[i], j = i * 3; out[j] = THREE.MathUtils.lerp(d.source.x, d.end.x, spread); out[j + 1] = THREE.MathUtils.lerp(d.source.y, d.end.y, spread); out[j + 2] = THREE.MathUtils.lerp(d.source.z, d.end.z, spread); }
-  outGeo.attributes.position.needsUpdate = true; outMat.uniforms.uOpacity.value = 0.64 * op;
-  updateCamera(t); renderer.render(scene, camera); window.__sceneTime = t;
-  if (t >= DURATION - 1 / FPS) window.__V5_LEARNING_EXIT_FIELD = { count: OUT_COUNT, positions: new Float32Array(outPos), colors: new Float32Array(outColors), cameraPosition: camera.position.clone(), cameraTarget: cameraAim.clone(), starRotationY: stars.rotation.y };
+  const t = clamp(Number(frame) / FPS, 0, DURATION); prepareIncoming();
+  const p = inGeo.attributes.position.array, form = smooth(t / .78);
+  for (let i = 0; i < IN; i++) { const j = i * 3; p[j] = THREE.MathUtils.lerp(inSource[j], mapTargets[j], form); p[j + 1] = THREE.MathUtils.lerp(inSource[j + 1], mapTargets[j + 1], form); p[j + 2] = THREE.MathUtils.lerp(inSource[j + 2], mapTargets[j + 2], form); }
+  inGeo.attributes.position.needsUpdate = true; inMat.uniforms.uOpacity.value = 0;
+  const cityAlpha = 1 - smooth((t - 27.78) / .18); setAlpha(world.city, cityAlpha); world.city.visible = cityAlpha > .005;
+  const detect = win(t, 3.15, 9.65, .28, .45); world.setDetection(t + .6, detect * cityAlpha, Math.max(0, (t - 3.55) / .52));
+  const spread = 1;
+  world.setCrowdSpread(spread);
+  const protestMove = smooth((t - 9.52) / 1.20); world.protest.position.set(-3 + protestMove * 8, 0, protestMove * 5); if (protestMove > .62) world.spillover.visible = false;
+  world.setRouteState({ visible: t > 6.25 ? [0, 1, 2] : [2], selected: t < 6.25 ? 2 : t < 9.55 ? 2 : t >= 11.35 ? 0 : -1, blocked: true, alpha: (t < 6.25 ? .72 : win(t, 6.25, 27.2, .24, .28)) * cityAlpha });
+  animateCar(t);
+  const oldPred = win(t, 6.25, 11.2, .2, .18), newPred = win(t, 11.2, 16.95, .2, .3);
+  probabilities.show(Math.max(oldPred, newPred), newPred > oldPred ? [82, 20, 34] : [34, 20, 82], newPred > oldPred ? 0 : 2);
+  const histor = win(t, 17.2, 21.12, .20, .25); if (histor > 0) probabilities.show(Math.max(oldPred, newPred) * (1 - histor), newPred > oldPred ? [82, 20, 34] : [34, 20, 82], newPred > oldPred ? 0 : 2);
+  setHeadlines(t);
+  const outStart = 27.05, mix = smooth((t - outStart) / .8), op = smooth((t - outStart) / .16), q = outGeo.attributes.position.array;
+  for (let i = 0; i < OUT; i++) { const j = i * 3; q[j] = outTarget[j] + Math.sin(i * 5.1 + t) * .09 * mix; q[j + 1] = outTarget[j + 1] + .10 + (1 - mix) * .20; q[j + 2] = outTarget[j + 2] + Math.cos(i * 9.2 + t) * .09 * mix; }
+  outGeo.attributes.position.needsUpdate = true; outMat.uniforms.uOpacity.value = .50 * smooth((t - 27.80) / .20);
+  const camBlend = smooth(t / .65); camera.position.copy(inheritedCamera).lerp(new THREE.Vector3(0, 22.5, 25.5), camBlend); aim.copy(inheritedAim).lerp(new THREE.Vector3(0, 0, 0), camBlend); camera.lookAt(aim);
+  const focus = smooth((t - 21.0) / 2.0); camera.position.x = Math.sin(t * .11) * .25 + focus * 1.0; camera.position.z = 25.5 - focus * .6; camera.lookAt(aim);
+  stars.rotation.y = inheritedStar + t * .0010; stars.rotation.x = Math.sin(t * .05) * .006;
+  renderer.render(scene, camera); window.__sceneTime = t;
+  if (t >= DURATION - 1 / FPS) window.__V5_LEARNING_EXIT_FIELD = { count: OUT, positions: new Float32Array(outPos), colors: new Float32Array(outColors), cameraPosition: camera.position.clone(), cameraTarget: aim.clone(), starRotationY: stars.rotation.y };
 }
-function resize() {
-  const width = Math.max(1, host.clientWidth || window.innerWidth), height = Math.max(1, host.clientHeight || Math.round(width * 9 / 16));
-  renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix(); if (standalone) renderFrame(Math.round((window.__playerTime || 0) * FPS));
-}
+function resize() { const w = Math.max(1, host.clientWidth || window.innerWidth), h = Math.max(1, host.clientHeight || Math.round(w * 9 / 16)); renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); if (standalone) renderFrame(Math.round((window.__playerTime || 0) * FPS)); }
 if (standalone) { window.renderFrame = renderFrame; window.__sceneReady = true; window.addEventListener('resize', resize); resize(); renderFrame(0); window.dispatchEvent(new Event('v5scene-ready')); }
 export { renderFrame, resize };
