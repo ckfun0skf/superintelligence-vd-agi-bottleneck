@@ -5,7 +5,7 @@ V4 的確定性 Three.js/WebGL 動態紀錄片與音畫同步互動預覽；V5 �
 ## 預覽
 
 - [V4 全片互動預覽](https://ckfun0skf.github.io/superintelligence-vd-agi-bottleneck/)
-- [V5 連續預覽：開場＋推理＋同一自動駕駛案例（00:00–01:50.00）](https://ckfun0skf.github.io/superintelligence-vd-agi-bottleneck/v5-preview.html)
+- [V5 連續預覽：任務1至6（00:00–02:44.35）](https://ckfun0skf.github.io/superintelligence-vd-agi-bottleneck/v5-preview.html)
 
 V5 單頁使用原旁白／配樂作音訊主時鐘，同步畫面；控制列、時間軸及細分章節均位於畫布下方。無需先輸出 MP4 即可聽看、拖曳及逐段檢查。V4 原有預覽與成片保留不變。
 
@@ -27,12 +27,12 @@ python3 -m http.server 8000
 
 ## V5 連續審核
 
-V5 使用**單一互動預覽頁與連續旁白時間軸**；目前已整合00:00–01:50.00的開場、推理，以及Task3／4共用的自動駕駛示威封路案例，用同一個WebGL canvas及連續音軌播放。Task1／2以粒子與鏡頭狀態交接；Task3／4則直接延續同一座城市、同一輛車與已選中的Route C，不再插入抽象點陣轉場。兩段先辨識封路與示威，再預測三條路線的準時／低影響機率；示威移動後Route A重開，系統更新機率並改道。Task4另以Cyber戰術掃描框、指向式標籤及跨行程紀錄呈現識別、預測、決策與長期可靠性挑戰。完整分鏡、3D視覺方向、轉場規則與審核關卡見 [`V5_REVISION_PROPOSAL.md`](V5_REVISION_PROPOSAL.md)。
+V5 使用**單一互動預覽頁與連續旁白時間軸**；目前整合00:00–02:44.35，使用同一個WebGL canvas及連續音軌播放。Task1／2以粒子與鏡頭狀態交接；Task3／4直接延續同一座城市、同一輛車與路線選擇；Task5將學習迴圈擴展成機房與資源成本；Task6由機房粒子過渡至推理、世界模型、學習及可靠性四個具體能力模組，再以未閉合系統缺口和時間地平線呈現未知，而不使用抽象門形。完整分鏡、3D視覺方向、轉場規則與審核關卡見 [`V5_REVISION_PROPOSAL.md`](V5_REVISION_PROPOSAL.md)。
 
 ## 專案內容
 
 - `index.html` — V4 16:9 畫布與其下方的播放器、時間軸、章節跳轉及同步音軌；提供V5預覽入口
-- `v5-preview.html` — 唯一V5互動預覽頁，單一音軌／時間軸涵蓋00:00–02:20.00，章節控制位於畫布下方
+- `v5-preview.html` — 唯一V5互動預覽頁，單一音軌／時間軸涵蓋00:00–02:44.35，章節控制位於畫布下方
 - `src/v5_continuous_preview.js` — 單一renderer及跨場景粒子／相機handoff總控
 - `src/v4_particle_documentary.js` — 保留的 V4 Three.js 全片場景
 - `src/v5_opening_preview.js` — V5 第一任務的可重現 3D 開場場景與即時播放器同步
@@ -40,12 +40,14 @@ V5 使用**單一互動預覽頁與連續旁白時間軸**；目前已整合00:0
 - `src/v5_patterns_preview.js` — V5 第三任務的自動駕駛感知、封路成因、三路線機率預測及失配更新場景
 - `src/v5_learning_loop_preview.js` — V5 第四任務延續同一車程，使用Cyber掃描框、目標標籤、路線重算及跨行程記錄
 - `src/v5_compute_cost_preview.js` — V5 第五任務以立體計算網絡呈現晶片、能源、資料、時間及規模不保證通用智能
+- `src/v5_capability_system_preview.js` — V5 第六任務以四個具體能力模組、未閉合系統缺口與未知時間地平線呈現AGI的不確定性
 - `src/v5_autodrive_world.js` — Task3／4共用城市道路、示威封路、立體車輛、檢測框與路線機率HUD
 - `assets/audio/v5_continuous_preview_01_50_00.mp3` — 前一版連續V5預覽音軌（00:00–01:50.00，已由2:20版取代）
 - `assets/audio/v5_continuous_preview_02_20_00.mp3` — 從原始無損混音裁出的Task5連續預覽音軌（00:00–02:20.00）
+- `assets/audio/v5_continuous_preview_02_44_35.mp3` — 從原始無損混音裁出的Task6連續預覽音軌（00:00–02:44.35）
 - `assets/vendor/three.module.js`、`three.core.js` — V5 頁使用的 Three.js 0.186.1 固定版本及其模組相依檔
 - `assets/audio/` — 完整混音（MP3播放版及WAV無損母檔）、七段分軌旁白及兩段配樂
 - `render_v4.js` — Puppeteer／Chromium 逐格算圖工具；離線算圖時隱藏網頁控制列
 - `render/Super_Intelligent_AGI_Bottleneck_V4_1080p.mp4` — 最終成片規格記錄於 `V4_DELIVERY_NOTES.md`；大型成片未放入repo
 
-音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1至4已完成目前修訂；Task3／4同一自動駕駛案例已依回饋校正路線高度、封鎖狀態、連續行程與互斥機率。Task5（01:50–02:20）以立體運算網絡呈現晶片、能源、資料、時間、能力增長與成本取捨，已完成逐格與播放同步驗收，現待使用者審閱。**後續段落逐次確認再製作。
+音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1至5已完成目前修訂且Task5已獲確認；Task6涵蓋02:20.4–02:44.35，以四種具體能力模組及未閉合未知缺口呈現多項進展如何共同構成智能，現待使用者審閱。**Task7待Task6通過後再開始。

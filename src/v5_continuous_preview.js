@@ -5,11 +5,13 @@ const CUT_1 = 22.2;
 const CUT_2 = 50.76;
 const CUT_3 = 82.0;
 const CUT_4 = 110.0;
-const DURATION = 140.0;
+const CUT_5 = 140.38;
+const DURATION = 164.35;
 const CUT_1_FRAME = Math.round(CUT_1 * FPS);
 const CUT_2_FRAME = Math.round(CUT_2 * FPS);
 const CUT_3_FRAME = Math.round(CUT_3 * FPS);
 const CUT_4_FRAME = Math.round(CUT_4 * FPS);
+const CUT_5_FRAME = Math.round(CUT_5 * FPS);
 const DURATION_FRAME = Math.round(DURATION * FPS);
 const container = document.getElementById('canvas-container');
 if (!container) throw new Error('V5 preview canvas container is missing.');
@@ -32,10 +34,12 @@ let reasoning;
 let patterns;
 let learning;
 let computeCost;
+let capabilitySystem;
 let openingHandoffReady = false;
 let reasoningHandoffReady = false;
 let patternsHandoffReady = false;
 let learningHandoffReady = false;
+let computeHandoffReady = false;
 let currentTime = 0;
 
 function renderAt(time) {
@@ -66,12 +70,18 @@ function renderAt(time) {
           patternsHandoffReady = true;
         }
         learning.renderFrame(frame - CUT_3_FRAME);
-      } else {
+      } else if (frame < CUT_5_FRAME) {
         if (!learningHandoffReady) {
           learning.renderFrame(CUT_4_FRAME - CUT_3_FRAME);
           learningHandoffReady = true;
         }
         computeCost.renderFrame(frame - CUT_4_FRAME);
+      } else {
+        if (!computeHandoffReady) {
+          computeCost.renderFrame(CUT_5_FRAME - CUT_4_FRAME);
+          computeHandoffReady = true;
+        }
+        capabilitySystem.renderFrame(frame - CUT_5_FRAME);
       }
     }
   }
@@ -82,12 +92,13 @@ function resize() {
   const width = Math.max(1, container.clientWidth || window.innerWidth);
   const height = Math.max(1, container.clientHeight || Math.round(width * 9 / 16));
   renderer.setSize(width, height, false);
-  if (opening && reasoning && patterns && learning && computeCost) {
+  if (opening && reasoning && patterns && learning && computeCost && capabilitySystem) {
     opening.resize();
     reasoning.resize();
     patterns.resize();
     learning.resize();
     computeCost.resize();
+    capabilitySystem.resize();
     renderAt(currentTime);
   }
 }
@@ -98,6 +109,7 @@ try {
   patterns = await import('./v5_patterns_preview.js');
   learning = await import('./v5_learning_loop_preview.js');
   computeCost = await import('./v5_compute_cost_preview.js');
+  capabilitySystem = await import('./v5_capability_system_preview.js');
   window.renderFrame = frame => renderAt(Math.max(0, Number(frame) || 0) / FPS);
   window.addEventListener('resize', resize);
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(container);

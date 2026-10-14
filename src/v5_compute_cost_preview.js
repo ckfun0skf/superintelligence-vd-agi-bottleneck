@@ -90,6 +90,7 @@ for (let i = -5; i <= 5; i++) {
   const x = i * 1.15; beam(floor, new THREE.Vector3(x, -1.41, -7.4), new THREE.Vector3(x, -1.41, 2.2), .012, 0x24617a, .27, true);
 }
 for (let z = -7; z <= 2; z += 1.4) beam(floor, new THREE.Vector3(-6.4, -1.405, z), new THREE.Vector3(6.4, -1.405, z), .012, 0x24617a, .24, true);
+window.__V5_COMPUTE_HANDOFF_OBJECTS = { rackBank, floor, stars };
 
 // Handoff points are mapped onto the actual face/edges of the central server cabinet.
 const IN = 360, inPos = new Float32Array(IN * 3), inColor = new Float32Array(IN * 3), inSource = new Float32Array(IN * 3), inTarget = new Float32Array(IN * 3);

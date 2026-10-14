@@ -61,13 +61,13 @@
     <section id="player-controls" aria-label="預覽播放控制">
       <div class="control-row">
         <button class="button" id="play" type="button" aria-label="播放">播放</button>
-        <span id="time" aria-live="off">00:00 / 02:20</span>
-        <input id="timeline" type="range" min="0" max="140" value="0" step="0.05" aria-label="播放位置" />
+      <span id="time" aria-live="off">00:00 / 02:44</span>
+        <input id="timeline" type="range" min="0" max="164.35" value="0" step="0.05" aria-label="播放位置" />
         <button class="button" id="speed" type="button" aria-label="播放速度">1.0×</button>
         <button class="button" id="chapter-toggle" type="button" aria-expanded="true" aria-controls="secondary">收起章節</button>
       </div>
       <div id="secondary">
-        <div id="status" role="status">按「播放」開始連續旁白同步預覽；目前涵蓋 00:00–02:20.00。</div>
+        <div id="status" role="status">按「播放」開始連續旁白同步預覽；目前涵蓋 00:00–02:44.35。</div>
         <nav id="chapters" aria-label="V5連續預覽章節">
           <button class="chapter active" type="button" data-time="0.0">00:00 速度建立</button>
           <button class="chapter" type="button" data-time="4.34">00:04 寫程式</button>
@@ -107,19 +107,23 @@
           <button class="chapter" type="button" data-time="127.40">02:07 算力擴展能力</button>
           <button class="chapter" type="button" data-time="130.90">02:10 規模不保證AGI</button>
           <button class="chapter" type="button" data-time="134.50">02:14 可靠智能與成本</button>
+          <button class="chapter" type="button" data-time="140.38">02:20 沒有單一瓶頸</button>
+          <button class="chapter" type="button" data-time="148.42">02:28 多項進展合作</button>
+          <button class="chapter" type="button" data-time="154.80">約02:35 缺少根本因素</button>
+          <button class="chapter" type="button" data-time="157.74">約02:38 尚不知哪項／何時</button>
         </nav>
       </div>
     </section>
     <div id="page-note">
-      <span>V5 單頁連續預覽 · 已整合 00:00–02:20.00 · 目前含任務1至5</span>
+      <span>V5 單頁連續預覽 · 已整合 00:00–02:44.35 · 目前含任務1至6</span>
       <span><a class="text-link" href="./">返回 V4 全片預覽</a></span>
     </div>
-    <audio id="audio" preload="auto" src="./assets/audio/v5_continuous_preview_02_20_00.mp3"></audio>
+    <audio id="audio" preload="auto" src="./assets/audio/v5_continuous_preview_02_44_35.mp3"></audio>
   </main>
   <script type="module" src="./src/v5_continuous_preview.js"></script>
   <script type="module">
     const FPS = 24;
-    const PREVIEW_DURATION = 140.0;
+    const PREVIEW_DURATION = 164.35;
     const audio = document.getElementById('audio');
     const playButton = document.getElementById('play');
     const timeline = document.getElementById('timeline');
