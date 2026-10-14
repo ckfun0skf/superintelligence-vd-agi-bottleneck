@@ -92,13 +92,13 @@ function renderFrame(frame) {
   statusMap.forEach(([key, s]) => {
     let a = 0;
     if (key === 'input') a = win(t, .20, 4.55, .25, .30);
-    if (key === 'pattern') a = win(t, 4.55, 10.0, .24, .30);
-    if (key === 'cause') a = win(t, 10.0, 16.4, .26, .22);
+    if (key === 'pattern') a = win(t, 4.88, 10.0, .24, .30);
+    if (key === 'cause') a = win(t, 10.35, 16.4, .26, .22);
     if (key === 'unfamiliar') a = win(t, 17.0, 20.85, .22, .28);
-    if (key === 'predict') a = win(t, 20.85, 24.12, .20, .22);
-    if (key === 'hidden') a = win(t, 24.08, 28.48, .22, .18);
-    if (key === 'contradiction') a = win(t, 28.48, 30.12, .16, .18);
-    if (key === 'update') a = win(t, 30.10, 31.24, .16, .16);
+    if (key === 'predict') a = win(t, 21.15, 24.12, .20, .22);
+    if (key === 'hidden') a = win(t, 24.36, 28.48, .22, .18);
+    if (key === 'contradiction') a = win(t, 28.70, 30.12, .16, .18);
+    if (key === 'update') a = win(t, 30.34, 31.24, .16, .16);
     setTextAlpha(s, a);
   });
   const mapOut = smooth((t - 30.35) / .84); const op = smooth((t - 30.45) / .18), q = outGeo.attributes.position.array;
