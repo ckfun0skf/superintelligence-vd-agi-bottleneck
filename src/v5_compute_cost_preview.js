@@ -237,8 +237,9 @@ for(let i=0;i<3;i++){
   const x=-1.55+i*1.55; frontBox(compareLeft,x,-.18,.17,1.35,.96,.07,0x122d2b,.99,false);
   const num=makeText(THREE,compareLeft,`TEST ${i+1}`,{width:1.30,size:220,color:'#c4eee1',glow:'#74e7ad',x,y:.07,z:.26});
   const check=new THREE.Group(); compareLeft.add(check);
-  beam(check,new THREE.Vector3(x-.14,-.27,.31),new THREE.Vector3(x-.02,-.39,.31),.05,C.green,.99,true);
-  beam(check,new THREE.Vector3(x-.02,-.39,.31),new THREE.Vector3(x+.20,-.13,.31),.05,C.green,.99,true);
+  const tickA=beam(check,new THREE.Vector3(x-.14,-.27,.36),new THREE.Vector3(x-.02,-.39,.36),.05,C.green,.99,true);
+  const tickB=beam(check,new THREE.Vector3(x-.02,-.39,.36),new THREE.Vector3(x+.20,-.13,.36),.05,C.green,.99,true);
+  for(const tick of [tickA,tickB]){tick.renderOrder=12;tick.material.depthTest=false;tick.material.depthWrite=false;}
   trials.push({num,check});
 }
 const compareRight = hudPanel(3.35,-1.65,5.55,2.45,0x1c1910);
