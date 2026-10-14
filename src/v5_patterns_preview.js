@@ -73,8 +73,8 @@ function nearestRouteProgress(routeIndex, x, z) {
   return bestU;
 }
 const directStop = nearestRouteProgress(0, -3, 1.05);
-const blockedB = nearestRouteProgress(1, 5, 5);
-const branchB = nearestRouteProgress(1, -3, 5);
+const blockedB = nearestRouteProgress(1, 3.45, 5);
+const branchB = nearestRouteProgress(1, 3, 5);
 const branchPoint = world.routes[1].curve.getPointAt(branchB);
 const branchC = nearestRouteProgress(2, branchPoint.x, branchPoint.z);
 function placeCar(t) {
@@ -94,18 +94,19 @@ function renderFrame(frame) {
   const cityIn = smooth(t / .95); const cityOut = 1; setAlpha(world.city, cityIn * cityOut);
   world.city.visible = cityIn * cityOut > .005;
   world.setCrowdSpread(win(t, 24.1, 31.24, .9, .1));
-  const predicted = t >= 28.48 ? [34, 20, 82] : [18, 76, 44];
+  const predicted = t >= 28.48 ? [0, 0, 100] : [0, 63, 37];
   const chosen = predicted.indexOf(Math.max(...predicted));
   const routeAlpha = smooth((t - 9.8) / .25);
   const visibleRoutes = t < 10.0 ? [] : t < 16.9 ? [0] : t < 30.2 ? [0, 1, 2] : [2];
   const probabilityActive = t >= 21.15;
-  world.setRouteState({ visible: visibleRoutes, selected: probabilityActive ? chosen : -1, blockedRoutes: t >= 15.15 ? [0] : [], alpha: routeAlpha, scores: probabilityActive ? predicted : null });
+  const blockedRoutes = t >= 28.48 ? [0, 1] : t >= 15.15 ? [0] : [];
+  world.setRouteState({ visible: visibleRoutes, selected: probabilityActive ? chosen : -1, blockedRoutes, alpha: routeAlpha, scores: probabilityActive ? predicted : null });
   placeCar(t);
   world.setBrake((t >= 15.15 && t < 21.15) || (t >= 24.15 && t < 28.48));
   const forecast = win(t, 20.85, 28.48, .22, .18), updatedA = win(t, 28.60, 31.0, .24, .16);
   const probabilityAlpha = Math.max(forecast, updatedA);
   world.setMapLayout(smooth((t - 20.35) / .65) * (1 - smooth((t - 30.78) / .40)), -1);
-  probabilities.show(probabilityAlpha, predicted, chosen);
+  probabilities.show(probabilityAlpha, predicted, chosen, blockedRoutes);
   setTextAlpha(title, win(t, 9.95, 16.3, .24, .20));
   sourceLines.forEach((s, i) => setTextAlpha(s, win(t, .25 + i * .48, 4.12, .20, .35)));
   statusMap.forEach(([key, s]) => {

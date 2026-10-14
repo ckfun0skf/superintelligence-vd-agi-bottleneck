@@ -28,13 +28,14 @@ const headlines = {
   identify: makeText(THREE, camera, 'IDENTIFYING...', { width: 9.6, size: 84, color: '#e4fbff', glow: '#55e5ff', x: 0, y: 4.15, z: -14 }),
   predict: makeText(THREE, camera, 'PREDICTING MULTIPLE ROUTE OUTCOMES', { width: 13.6, size: 49, x: 0, y: 3.75, z: -14 }),
   mismatch: makeText(THREE, camera, 'REALITY CHANGED: THE PROTEST MOVED', { width: 14.0, size: 50, color: '#ffdce2', glow: '#ff3854', x: 0, y: 3.75, z: -14 }),
-  revise: makeText(THREE, camera, 'REROUTE: ROUTE A IS NOW THE BEST CHANCE', { width: 14.0, size: 47, color: '#d6ffea', glow: '#74e7ad', x: 0, y: 3.75, z: -14 }),
+  revise: makeText(THREE, camera, 'NEXT TRIP: ROUTE A IS NOW THE BEST CHANCE', { width: 14.0, size: 45, color: '#d6ffea', glow: '#74e7ad', x: 0, y: 3.75, z: -14 }),
   partial: makeText(THREE, camera, 'AI CAN PERFORM PARTS OF THIS PROCESS', { width: 13.5, size: 51, x: 0, y: 3.75, z: -14 }),
   longTerm: makeText(THREE, camera, 'DOES THE LEARNING LAST OVER MANY TRIPS?', { width: 14.0, size: 48, color: '#ffe5b1', glow: '#ffcf72', x: 0, y: 3.75, z: -14 }),
   investigate: makeText(THREE, camera, 'NEXT: CHECK WHETHER THE NORTH ROAD IS CLEAR', { width: 14.8, size: 43, x: 0, y: 3.75, z: -14 }),
   correct: makeText(THREE, camera, 'BRAKE. RECHECK. CHOOSE A SAFER ROUTE.', { width: 13.6, size: 48, color: '#d6ffea', glow: '#74e7ad', x: 0, y: 3.75, z: -14 }),
   challenge: makeText(THREE, camera, 'RELIABLE SELF-CORRECTION REMAINS HARD', { width: 14.6, size: 46, color: '#ffe5b1', glow: '#ffcf72', x: 0, y: 3.75, z: -14 }),
 };
+const nextTripLabel = makeText(THREE, camera, 'TRIP 03  ·  START → DESTINATION  ·  ROUTE A', { width: 10.5, size: 42, color: '#baffd8', glow: '#55e5a1', x: 0, y: 2.80, z: -14 });
 const sourceLabels = [
   makeText(THREE, camera, 'LIVE CAMERA  ·  MAP  ·  TRAFFIC FEED', { width: 8.6, size: 43, x: -3.95, y: 2.55, z: -14, align: 'left' }),
   makeText(THREE, camera, 'DETECT  →  PREDICT  →  ACT', { width: 7.5, size: 44, x: -3.95, y: 1.68, z: -14, align: 'left' }),
@@ -87,19 +88,16 @@ function nearestRouteProgress(routeIndex, x, z) {
   for (let i = 0; i <= 1800; i++) { const u = i / 1800, p = curve.getPointAt(u), d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < bestD) { bestD = d; bestU = u; } }
   return bestU;
 }
-const cBranchB = nearestRouteProgress(1, -3, 5), cBranchPoint = world.routes[1].curve.getPointAt(cBranchB);
-const cBranch = nearestRouteProgress(2, cBranchPoint.x, cBranchPoint.z), cWestJunction = nearestRouteProgress(2, -8, 5);
-const aWestJunction = nearestRouteProgress(0, -8, 5), aProtestStop = nearestRouteProgress(0, -3, 1.05);
+const cBranch = nearestRouteProgress(2, 3, 5);
 function animateCar(t) {
   const cStart = cBranch + .025;
-  if (t < 7.8) { world.placeCar(2, THREE.MathUtils.lerp(cStart, cWestJunction, smooth(t / 7.8))); return; }
-  if (t < 9.55) { world.placeCar(2, cWestJunction + .035 * smooth((t - 7.8) / 1.75)); return; }
-  if (t < 11.35) { world.placeCar(2, cWestJunction + .035); return; }
-  if (t < 12.15) { world.placeCar(2, THREE.MathUtils.lerp(cWestJunction + .035, cWestJunction, smooth((t - 11.35) / .8))); return; }
-  if (t < 17.1) { world.placeCar(0, THREE.MathUtils.lerp(aWestJunction, aProtestStop, smooth((t - 12.15) / 4.95))); return; }
-  if (t < 24.0) { world.placeCar(0, aProtestStop); return; }
-  if (t < 25.1) { world.placeCar(0, THREE.MathUtils.lerp(aProtestStop, .50, smooth((t - 24.0) / 1.1))); return; }
-  world.placeCar(0, .50 + smooth((t - 25.1) / 2.7) * .12);
+  const car = world.heroCar;
+  if (t < 7.3) { car.scale.setScalar(1); world.placeCar(2, THREE.MathUtils.lerp(cStart, 1, smooth(t / 7.3))); return; }
+  if (t < 11.10) { car.scale.setScalar(1); world.placeCar(2, 1); return; }
+  if (t < 11.45) { car.scale.setScalar(1 - smooth((t - 11.10) / .35)); world.placeCar(2, 1); return; }
+  if (t < 11.80) { world.placeCar(0, 0); car.scale.setScalar(smooth((t - 11.45) / .35)); return; }
+  if (t < 17.0) { car.scale.setScalar(1); world.placeCar(0, smooth((t - 11.80) / 5.20)); return; }
+  car.scale.setScalar(1); world.placeCar(0, 1);
 }
 function renderFrame(frame) {
   const t = clamp(Number(frame) / FPS, 0, DURATION); prepareIncoming();
@@ -110,16 +108,18 @@ function renderFrame(frame) {
   const spread = 1;
   world.setCrowdSpread(spread);
   const protestMove = smooth((t - 9.52) / 1.20); world.protest.position.set(-3 + protestMove * 8, -0.24, protestMove * 5); if (protestMove > .62) world.spillover.visible = false;
-  const routeScores = t < 11.2 ? [34, 20, 82] : [82, 20, 34];
+  const routeScores = t < 9.52 ? [0, 20, 80] : t < 11.2 ? [0, 0, 100] : [88, 0, 12];
   const routeChoice = routeScores.indexOf(Math.max(...routeScores));
   const mapSplit = smooth((t - 6.0) / .55) * (1 - smooth((t - 21.1) / .60));
   const mapSide = THREE.MathUtils.lerp(-1, 1, smooth((t - 16.95) / .45)); world.setMapLayout(mapSplit, mapSide);
-  world.setRouteState({ visible: t > 6.25 ? [0, 1, 2] : [2], selected: routeChoice, blocked: true, alpha: (t < 6.25 ? .72 : win(t, 6.25, 27.2, .24, .28)) * cityAlpha, scores: routeScores });
+  const blockedRoutes = t < 9.52 ? [0] : t < 10.72 ? [0, 1] : t < 11.2 ? [1] : [1];
+  world.setRouteState({ visible: t > 6.25 ? [0, 1, 2] : [2], selected: routeChoice, blockedRoutes, alpha: (t < 6.25 ? .72 : win(t, 6.25, 27.2, .24, .28)) * cityAlpha, scores: routeScores });
   animateCar(t);
   world.setBrake(t >= 9.55 && t < 11.35);
   const oldPred = win(t, 6.25, 11.2, .24, .18), newPred = win(t, 11.36, 16.95, .24, .28);
-  probabilities.show(Math.max(oldPred, newPred), routeScores, routeChoice);
-  const histor = win(t, 17.2, 21.12, .20, .25); if (histor > 0) probabilities.show(Math.max(oldPred, newPred) * (1 - histor), routeScores, routeChoice);
+  probabilities.show(Math.max(oldPred, newPred), routeScores, routeChoice, blockedRoutes);
+  const histor = win(t, 17.2, 21.12, .20, .25); if (histor > 0) probabilities.show(Math.max(oldPred, newPred) * (1 - histor), routeScores, routeChoice, blockedRoutes);
+  setTextAlpha(nextTripLabel, win(t, 11.2, 17.15, .22, .24));
   setHeadlines(t);
   const outStart = 27.05, mix = smooth((t - outStart) / .8), op = smooth((t - outStart) / .16), q = outGeo.attributes.position.array;
   for (let i = 0; i < OUT; i++) { const j = i * 3; q[j] = outTarget[j] + Math.sin(i * 5.1 + t) * .09 * mix; q[j + 1] = outTarget[j + 1] + .10 + (1 - mix) * .20; q[j + 2] = outTarget[j + 2] + Math.cos(i * 9.2 + t) * .09 * mix; }

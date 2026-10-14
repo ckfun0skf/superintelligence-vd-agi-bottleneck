@@ -82,8 +82,8 @@ function addCar(parent, color, x, z, scale = 1) {
   return g;
 }
 function orthogonalRoute(points) {
-  // Road surface is y=-0.24; lift the AR tube enough that its lower radius clears asphalt.
-  const pts = points.map(([x, z]) => new THREE.Vector3(x, -0.12, z)), path = new THREE.CurvePath();
+  // Road and lane paint top out near y=-0.19; float the full AR tube above both.
+  const pts = points.map(([x, z]) => new THREE.Vector3(x, -0.035, z)), path = new THREE.CurvePath();
   let cursor = pts[0].clone();
   for (let i = 1; i < pts.length - 1; i++) {
     const incoming = pts[i].clone().sub(pts[i - 1]).normalize(), outgoing = pts[i + 1].clone().sub(pts[i]).normalize();
@@ -151,10 +151,10 @@ export function createAutoDriveWorld(THREERef, scene, camera) {
     const lamp = sphere(city, 0.18, C.green, 0.82, true, 12); lamp.position.set(x + 0.88, 1.36, z + 0.65);
   }
   const routeA = routeTube(city, [[-9, 5], [-8, 5], [-3, 5], [-3, 0], [3, 0], [3, -5], [9, -5]], C.cyan, 0.16);
-  // Routes B and C are alternatives from the stopped car: they share the approach to the
-  // northern junction, then branch onto real eastbound or westbound streets.
+  // B and C share a true junction at (3,5). B continues toward the protest;
+  // C turns south there, so a blocked B can reroute locally rather than jump back.
   const routeB = routeTube(city, [[-3, 1.05], [-3, 5], [8, 5], [8, -5], [9, -5]], C.blue, 0.12);
-  const routeC = routeTube(city, [[-3, 1.05], [-3, 5], [-8, 5], [-8, -5], [8, -5], [9, -5]], C.blue, 0.12);
+  const routeC = routeTube(city, [[-3, 1.05], [-3, 5], [3, 5], [3, -5], [9, -5]], C.blue, 0.12);
   const routes = [routeA, routeB, routeC];
   // A destination pad and start marker orient the route choice.
   const startPin = sphere(city, 0.22, C.cyan, 0.96, true, 16); startPin.position.set(-9, -0.02, 5);
@@ -253,7 +253,7 @@ export function createAutoDriveWorld(THREERef, scene, camera) {
     routes.forEach((r, i) => {
       const isOn = visible.includes(i); r.mesh.visible = isOn;
       const rank = ranks?.get(i), isBlocked = blockedRoutes.includes(i) || (blocked && (i === 0 || i === 1));
-      const c = i === selected ? C.green : ranks ? (rank === 0 ? C.red : rank === 1 ? C.yellow : C.green) : isBlocked ? C.red : i === 0 ? C.cyan : C.blue;
+      const c = isBlocked ? C.red : i === selected ? C.green : ranks ? (rank === 0 ? C.red : rank === 1 ? C.yellow : C.green) : i === 0 ? C.cyan : C.blue;
       r.mesh.material.color.setHex(c); r.mesh.material.opacity = alpha * (i === selected ? 0.95 : isBlocked ? 0.82 : ranks ? 0.58 : 0.46);
       r.mesh.scale.set(1, i === selected ? 1.25 : 1, 1);
     });
@@ -276,13 +276,13 @@ export function createProbabilityHud(THREERef, camera) {
   }
   const legend = makeText(THREERef, group, 'LOW  RED   ·   MID  YELLOW   ·   HIGH  GREEN', { width: 4.9, size: 36, color: '#d1e7ee', x: 5.35, y: -2.13, z: -13.70 });
   group.visible = false;
-  function show(alpha, values = [18, 44, 76], selected = 2) {
+  function show(alpha, values = [0, 20, 80], selected = 2, blockedRoutes = []) {
     group.visible = alpha > 0.001;
     group.traverse(o => { if (o.material) o.material.opacity = (o.material.userData.baseOpacity ?? 1) * clamp(alpha); });
     const ordered = values.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v);
     const rank = new Map(ordered.map((x, i) => [x.i, i]));
     rows.forEach((row, i) => {
-      const col = rank.get(i) === 0 ? C.red : rank.get(i) === 2 ? C.green : C.yellow;
+      const col = blockedRoutes.includes(i) ? C.red : rank.get(i) === 0 ? C.red : rank.get(i) === 2 ? C.green : C.yellow;
       row.card.material.color.setHex(i === selected ? 0x173c38 : 0x152635);
       row.rail.material.color.setHex(col); row.label.material.color.set(new THREERef.Color(col));
       row.label.material.opacity = clamp(alpha);
