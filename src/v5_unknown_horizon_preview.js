@@ -294,18 +294,26 @@ function renderFrame(frame) {
   const brainYaw = .07 * Math.sin(t * .48) * (1 - dustProgress), brainPitch = .035 * Math.sin(t * .37) * (1 - dustProgress);
   const cy = Math.cos(brainYaw), sy = Math.sin(brainYaw), cx = Math.cos(brainPitch), sx = Math.sin(brainPitch);
   for (let i = 0; i < COUNT; i++) {
-    const j = i * 3, x = startPositions[j] - brainCenter.x, y = startPositions[j + 1] - brainCenter.y, z = startPositions[j + 2] - brainCenter.z;
-    const rx = x * cy + z * sy, rz = -x * sy + z * cy;
-    const brainX = brainCenter.x + rx;
-    const brainY = brainCenter.y + y * cx - rz * sx;
-    const brainZ = brainCenter.z + y * sx + rz * cx;
-    const spacedX = lerp(brainX, spacePositions[j], dustProgress), spacedY = lerp(brainY, spacePositions[j + 1], dustProgress), spacedZ = lerp(brainZ, spacePositions[j + 2], dustProgress);
-    currentPositions[j] = lerp(spacedX, finalPositions[j], merge);
-    currentPositions[j + 1] = lerp(spacedY, finalPositions[j + 1], merge);
-    currentPositions[j + 2] = lerp(spacedZ, finalPositions[j + 2], merge);
-    for (let k = 0; k < 3; k++) {
-      const a = lerp(startColors[j + k], spaceColors[j + k], dustProgress);
-      currentColors[j + k] = lerp(a, finalColors[j + k], merge);
+    const j = i * 3;
+    if (dustProgress > .999) {
+      currentPositions[j] = lerp(spacePositions[j], finalPositions[j], merge);
+      currentPositions[j + 1] = lerp(spacePositions[j + 1], finalPositions[j + 1], merge);
+      currentPositions[j + 2] = lerp(spacePositions[j + 2], finalPositions[j + 2], merge);
+      for (let k = 0; k < 3; k++) currentColors[j + k] = lerp(spaceColors[j + k], finalColors[j + k], merge);
+    } else {
+      const x = startPositions[j] - brainCenter.x, y = startPositions[j + 1] - brainCenter.y, z = startPositions[j + 2] - brainCenter.z;
+      const rx = x * cy + z * sy, rz = -x * sy + z * cy;
+      const brainX = brainCenter.x + rx;
+      const brainY = brainCenter.y + y * cx - rz * sx;
+      const brainZ = brainCenter.z + y * sx + rz * cx;
+      const spacedX = lerp(brainX, spacePositions[j], dustProgress), spacedY = lerp(brainY, spacePositions[j + 1], dustProgress), spacedZ = lerp(brainZ, spacePositions[j + 2], dustProgress);
+      currentPositions[j] = lerp(spacedX, finalPositions[j], merge);
+      currentPositions[j + 1] = lerp(spacedY, finalPositions[j + 1], merge);
+      currentPositions[j + 2] = lerp(spacedZ, finalPositions[j + 2], merge);
+      for (let k = 0; k < 3; k++) {
+        const a = lerp(startColors[j + k], spaceColors[j + k], dustProgress);
+        currentColors[j + k] = lerp(a, finalColors[j + k], merge);
+      }
     }
   }
   cloudGeo.attributes.position.needsUpdate = true; cloudGeo.attributes.color.needsUpdate = true;
@@ -313,28 +321,35 @@ function renderFrame(frame) {
   dustMat.uniforms.uOpacity.value = .94 * dustProgress * (1 - .08 * merge);
   dustMat.uniforms.uSize.value = lerp(.04272, .092, dustProgress);
   haloMat.opacity = .020 * (1 - dustProgress);
-  for (let e = 0; e < linkPairs.length / 2; e++) {
-    const j = e * 6, a = linkPairs[e * 2] * 3, b = linkPairs[e * 2 + 1] * 3;
-    linkPositions[j] = currentPositions[a]; linkPositions[j + 1] = currentPositions[a + 1]; linkPositions[j + 2] = currentPositions[a + 2];
-    linkPositions[j + 3] = currentPositions[b]; linkPositions[j + 4] = currentPositions[b + 1]; linkPositions[j + 5] = currentPositions[b + 2];
+  const linkAlpha = .060 * (1 - dustProgress);
+  if (linkAlpha > .001) {
+    for (let e = 0; e < linkPairs.length / 2; e++) {
+      const j = e * 6, a = linkPairs[e * 2] * 3, b = linkPairs[e * 2 + 1] * 3;
+      linkPositions[j] = currentPositions[a]; linkPositions[j + 1] = currentPositions[a + 1]; linkPositions[j + 2] = currentPositions[a + 2];
+      linkPositions[j + 3] = currentPositions[b]; linkPositions[j + 4] = currentPositions[b + 1]; linkPositions[j + 5] = currentPositions[b + 2];
+    }
+    linksGeo.attributes.position.needsUpdate = true;
   }
-  linksGeo.attributes.position.needsUpdate = true; linksMat.opacity = .060 * (1 - dustProgress);
+  linksMat.opacity = linkAlpha;
 
   // Short, independent trails move with the camera's forward vector: stars, not wires.
   const flightOn = smoothstep((t - 5.15) / .65) * (1 - smoothstep((t - MUSIC_CUE) / .48));
   const forward = t < 5.2 ? entryForward.clone() : flightTangent(flightEase);
-  for (let n = 0; n < STREAK_COUNT; n++) {
-    const i = n * 2, j = i * 3, k = n * 6;
-    v.set(currentPositions[j], currentPositions[j + 1], currentPositions[j + 2]);
-    const distance = v.distanceTo(camera.position), speedFactor = .15 + .85 * clamp(distance / 25);
-    const len = (.16 + .86 * speedFactor) * flightOn;
-    streakPos[k] = v.x; streakPos[k + 1] = v.y; streakPos[k + 2] = v.z;
-    streakPos[k + 3] = v.x - forward.x * len; streakPos[k + 4] = v.y - forward.y * len; streakPos[k + 5] = v.z - forward.z * len;
-    const r = currentColors[j], g = currentColors[j + 1], b = currentColors[j + 2];
-    streakCol[k] = r; streakCol[k + 1] = g; streakCol[k + 2] = b;
-    streakCol[k + 3] = r * .18; streakCol[k + 4] = g * .18; streakCol[k + 5] = b * .18;
+  if (flightOn > .001) {
+    for (let n = 0; n < STREAK_COUNT; n++) {
+      const i = n * 2, j = i * 3, k = n * 6;
+      v.set(currentPositions[j], currentPositions[j + 1], currentPositions[j + 2]);
+      const distance = v.distanceTo(camera.position), speedFactor = .15 + .85 * clamp(distance / 25);
+      const len = (.16 + .86 * speedFactor) * flightOn;
+      streakPos[k] = v.x; streakPos[k + 1] = v.y; streakPos[k + 2] = v.z;
+      streakPos[k + 3] = v.x - forward.x * len; streakPos[k + 4] = v.y - forward.y * len; streakPos[k + 5] = v.z - forward.z * len;
+      const r = currentColors[j], g = currentColors[j + 1], b = currentColors[j + 2];
+      streakCol[k] = r; streakCol[k + 1] = g; streakCol[k + 2] = b;
+      streakCol[k + 3] = r * .18; streakCol[k + 4] = g * .18; streakCol[k + 5] = b * .18;
+    }
+    streakGeo.attributes.position.needsUpdate = true; streakGeo.attributes.color.needsUpdate = true;
   }
-  streakGeo.attributes.position.needsUpdate = true; streakGeo.attributes.color.needsUpdate = true; streakMat.opacity = .95 * flightOn;
+  streakMat.opacity = .95 * flightOn;
   setAlpha(nextWorld, merge);
   const titleAlpha = 1 - smoothstep((t - .78) / 1.15);
   setTextAlpha(whenTitle, titleAlpha);
