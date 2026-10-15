@@ -63,10 +63,10 @@ for (let i = 0; i < OUT; i++) { const c = new THREE.Color(i % 5 === 0 ? C.green 
 function historyRow(y, label, color) {
   const panel = new THREE.Mesh(new THREE.BoxGeometry(6.2, .82, .12), basicMat(0x0b1926, .93, false)); panel.position.set(-5.05, y, -14.05); camera.add(panel);
   const accent = new THREE.Mesh(new THREE.BoxGeometry(.10, .68, .04), basicMat(color, .96, true)); accent.position.set(-8.02, y, -13.92); camera.add(accent);
-  const text = makeText(THREE, camera, label, { width: 5.9, size: 36, color: '#e6fbff', glow: color === C.red ? '#ff3854' : color === C.green ? '#74e7ad' : '#ffcf72', x: -5.0, y, z: -13.88, align: 'left' });
+  const text = makeText(THREE, camera, label, { width: 5.9, size: 54, weight: 900, color: '#ffffff', glow: color === C.red ? '#ff3854' : color === C.green ? '#74e7ad' : '#ffcf72', x: -5.0, y, z: -13.88, align: 'left' });
   return { panel, accent, text };
 }
-const logTitle = makeText(THREE, camera, 'SAME CITY · DIFFERENT TRIPS', { width: 6.2, size: 39, color: '#ffe5b1', glow: '#ffcf72', x: -5.0, y: 1.62, z: -13.86, align: 'left' });
+const logTitle = makeText(THREE, camera, 'SAME CITY · DIFFERENT TRIPS', { width: 6.2, size: 54, weight: 900, color: '#fff0c8', glow: '#ffcf72', x: -5.0, y: 1.62, z: -13.86, align: 'left' });
 const tripRows = [historyRow(.78, 'TRIP 01   ROUTE B   BLOCKED', C.red), historyRow(-.16, 'TRIP 02   ROUTE C   +4 MIN', C.yellow), historyRow(-1.10, 'TRIP 03   82%   ROUTE A ON TIME', C.green)];
 const routeBeacon = new THREE.Mesh(new THREE.TorusGeometry(.64, .07, 8, 40), basicMat(C.cyan, .92, true)); routeBeacon.rotation.x = Math.PI / 2; routeBeacon.position.set(5, .26, 5); world.city.add(routeBeacon);
 const probe = new THREE.Mesh(new THREE.SphereGeometry(.22, 16, 12), basicMat(C.ice, .98, true)); probe.position.set(5, 1.15, 5); world.city.add(probe);

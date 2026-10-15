@@ -266,16 +266,16 @@ export function createProbabilityHud(THREERef, camera) {
   const centerX = 5.18;
   const panel = new THREERef.Mesh(new THREERef.BoxGeometry(4.92, 5.35, 0.14), basicMat(0x06111c, 0.96, false)); panel.position.set(centerX, 0.03, -14); group.add(panel);
   const edge = new THREERef.LineSegments(new THREERef.EdgesGeometry(panel.geometry), new THREERef.LineBasicMaterial({ color: C.cyan, transparent: true, opacity: 0.55, depthWrite: false, toneMapped: false })); edge.position.copy(panel.position); edge.position.z += .08; group.add(edge);
-  const header = makeText(THREERef, group, 'CLEAR ARRIVAL CHANCE', { width: 4.62, size: 68, color: '#e8f8fc', x: centerX, y: 2.06, z: -13.88 });
+  const header = makeText(THREERef, group, 'CLEAR ARRIVAL CHANCE', { width: 4.62, size: 84, weight: 900, color: '#f2fbff', x: centerX, y: 2.06, z: -13.88 });
   const rows = [];
   const ys = [1.06, 0, -1.06];
   for (let i = 0; i < 3; i++) {
     const card = new THREERef.Mesh(new THREERef.BoxGeometry(4.48, 0.86, 0.08), basicMat(0x152635, 0.98, false)); card.position.set(centerX, ys[i], -13.86); group.add(card);
     const rail = new THREERef.Mesh(new THREERef.BoxGeometry(0.13, 0.70, 0.04), basicMat([C.red, C.yellow, C.green][i], 1, true)); rail.position.set(centerX - 2.10, ys[i], -13.77); group.add(rail);
-    const label = makeText(THREERef, group, '', { width: 4.02, size: 80, color: '#f5fbff', x: centerX + .12, y: ys[i], z: -13.69 });
+    const label = makeText(THREERef, group, '', { width: 4.02, size: 108, weight: 900, color: '#ffffff', x: centerX + .12, y: ys[i], z: -13.69 });
     rows.push({ card, rail, label, lastText: '' });
   }
-  const legend = makeText(THREERef, group, 'LOW / RED     MID / AMBER     HIGH / GREEN', { width: 4.60, size: 39, color: '#d9e8ef', x: centerX, y: -2.15, z: -13.68 });
+  const legend = makeText(THREERef, group, 'LOW / RED     MID / AMBER     HIGH / GREEN', { width: 4.60, size: 52, weight: 900, color: '#f0f7fb', x: centerX, y: -2.15, z: -13.68 });
   group.visible = false;
   const red = new THREERef.Color(C.red), amber = new THREERef.Color(C.yellow), green = new THREERef.Color(C.green);
   const targetColors = [red, amber, green], rowColors = [new THREERef.Color(), new THREERef.Color(), new THREERef.Color()];
@@ -317,8 +317,8 @@ export function createProbabilityHud(THREERef, camera) {
       if (text !== row.lastText) {
         const canvas = row.label.material.map.image, ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 80px Arial, sans-serif'; ctx.lineJoin = 'round';
-        ctx.shadowColor = `#${col.getHexString()}`; ctx.shadowBlur = 2; ctx.strokeStyle = 'rgba(1,5,12,.98)'; ctx.lineWidth = 16;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 108px "Arial Black", Arial, sans-serif'; ctx.lineJoin = 'round';
+        ctx.shadowColor = `#${col.getHexString()}`; ctx.shadowBlur = 1; ctx.strokeStyle = 'rgba(1,5,12,.98)'; ctx.lineWidth = 18;
         ctx.strokeText(text, canvas.width / 2, canvas.height / 2, canvas.width - 32); ctx.fillStyle = '#f5fbff'; ctx.fillText(text, canvas.width / 2, canvas.height / 2, canvas.width - 32);
         row.label.material.map.needsUpdate = true; row.lastText = text;
       }
