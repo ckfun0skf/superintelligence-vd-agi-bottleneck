@@ -1,6 +1,6 @@
 # SUPER INTELLIGENT — V5 視覺修訂提案
 
-**狀態：任務1及2已通過審閱；任務3與任務4共用同一個自動駕駛示威封路案例，依回饋已校正三維路線、封鎖狀態、車輛行程與互斥機率。任務5（01:50–02:20）已獲使用者確認；Task6正延伸同一連續預覽至02:44.35，依實際旁白尾句調整結束點，以機房粒子交接四個可辨識能力模組，再呈現未閉合的未知缺口與時間線。現有畫面以逐格音畫同步驗收；尚未開始全片算圖。**
+**Status: Tasks 1–2 have passed review; Tasks 3–4 share the autonomous-driving roadblock example; Task 5 (01:50–02:20) is approved. Task 6 (02:20.4–02:44.35) now stages four capability modules as persistent shapes that activate one by one and send pulses into the AI Model, then accelerate into a central collision and particle burst that reforms into a rotating 3D brain hologram. The brain points are deterministically sampled from the credited CC BY 4.0 source model. Local frame-by-frame rendering and chapter-seek A/V sync have passed; Task 6 is awaiting user review. Full-film rendering has not started.**
 
 ## 一、V5 目標
 
@@ -28,7 +28,7 @@ V5 的方向不是把使用者提供的 motion-design 參考片整套照搬：**
 | **00:50.76–01:22** | AI能從文字、影像、影片學模式，但認出模式不等於理解原因；在陌生情境需預測後果、考慮隱藏變數，並在現實推翻預期時更新。 | 以立體城市道路作唯一案例：道路封閉報告、行車影像及即時影片匯入同一車程；AI先辨識「道路封閉」，再框出示威人群和排隊車流以顯示成因。預測時A 0%、B 63%、C 37%（A封鎖紅、B最佳綠、C次佳黃）；示威擴散封住B後，重新計算A 0%、B 0%、C 100%，車輛短距離轉入C。 | Task3與Task4共用相同城市、車輛、示威和封路位置。道路候選線沿實際街道中心並浮在路面上方；街廓退離車道，路口採分離的四向斑馬線。辨識框轉色後由城市外側戰術HUD引線標註目標，並在機率面板進場前退場。三條互斥路線的機率每組合計100%；封鎖狀態優先顯示紅色。 |
 | **01:22–01:50** | 人類會提問、做實驗、從失敗學習和改變想法；AI可做部分步驟，但長期可靠學習、決定下一步查什麼和自行修錯仍是挑戰。 | 同一車輛沿Task3末段Route C續行至目的地。之後明確開始新一趟行程，顯示A 88%、B 0%、C 12%（A綠、B封鎖紅、C黃），並沿Route A由起點行至目的地；示威移動、路線狀態與機率更新同步發生。長期學習以不同車程的預測／實際結果紀錄呈現，結尾保留尚未解決的新路況。 | 保持同一城市及機率語意；封鎖路線即使排名變化仍保持紅色，互斥機率合計100%。車輛沿連續道路曲線行駛、不倒退跳位，並在跨行程紀錄出現前抵達終點；旅行切換以明確的 `TRIP 03 · START → DESTINATION · ROUTE A` 標記說明。 |
 | **01:50–02:20** | 智能擴展需要晶片／計算、能源、資料和時間；規模增加不保證通用或可靠智能；品質有成本。 | 保留四種可辨識資源輸入匯入模型，但讓它們的作用看得見：計算節點忙碌、能量流逐漸下降、資料樣本被使用、時間環走過。更大的資源流產生更多輸出，卻在陌生測試中失敗，直接呈現「規模 ≠ 保證」。只有旁白提出可靠度與成本取捨時，才讓兩條輸出／成本尺度並排出現。 | 資源輸入到模型的連線加粗，關鍵箭頭需能在 1080p 清楚看見；標籤和圖示留在標題安全區內。避免靜態四角標籤、過幼線條、成本條在旁白尚未談成本前提早出現。 |
-| **02:20.4–02:44.35** | “Perhaps there is no single barrier to AGI”; 多項進展合作；現有方法可能缺少根本因素；尚未知何者決定突破、何時到來。 | 機房與粒子沿用Task5實際出口，接著逐一形成四個有具體辨識物的立體模組：推理分支、物理世界模型（方塊與平台）、學習迴圈、重複成功測試。訊號共同匯入 `AGI?`，但在能力串接處保留未命名、未閉合的缺口；模組退場後以不同深度的候選節點引出「哪項能力？何時到來？」。 | 依逐字旁白句界：Task6由140.38秒開始，最後一句至164.22秒；預覽延長至164.35秒以保留語音尾韻。模組逐一進場，缺口不做成門形；進入未知時間地平線前先清空舊模組。 |
+| **02:20.4–02:44.35** | “Perhaps there is no single barrier to AGI”; multiple advances work together; current approaches may be missing something fundamental; it remains unknown which capability will matter or when. | Preserve all four capability shapes as they dim after “no single barrier.” At “many advances,” activate them one at a time without clearing/rebuilding them; each activation lights a dedicated tether and sends a moving pulse into the central AI Model. During “missing something fundamental,” accelerate the four modules around the center and pull them into a collision, then burst their deterministic particles outward. At “which capabilities / when,” reform the same particles into a rotating blue 3D brain hologram, with the unknown questions above; transition to the time horizon only at the following spoken beat. | Continue from Task 5’s real server-room particle/camera handoff. Keep modules larger and spaced apart before the orbit; fade labels before they overlap. Time the collision near 02:36–02:37 and complete the brain silhouette around 02:38. Use a seeded point cloud sampled from the credited CC BY 4.0 GLB embedded by the user-provided `sample-3d/brain.html`. Preview runs 140.38–164.35 s to retain the spoken tail. |
 | **02:43–03:00** | 哪種能力決定突破、何時到達仍未知；也許毋須先知道所有事。 | 以一條沿 Z 軸延伸的粒子時間地平線表示候選能力／里程碑；節點互換位置、遠近改變，沒有一個固定「關鍵」點。文字訊息簡短、居中，讓旁白主導；在旁白停頓處維持低幅度的漂移和景深，不以突然定格或閃切填空。 | 舊能力圖先退場，再讓地平線由少數粒子長出；鏡頭橫移而非快速旋轉。到 03:00 附近，各候選粒子向一個點收束，銜接適應網路。 |
 | **03:00–03:18** | 通用智能要學習、推理並適應陌生情境；究竟會走到哪裡仍不確定。 | 保留會向外成長的 3D 神經／能力網，但讓外圍情境有不同形狀和深度：新輸入造成路徑中斷，核心重新連接、修正並把新經驗保留下來；另一種陌生輸入出現時能沿用已學路徑又作調整。讓觀眾看到 transfer/adaptation，而非只看網路變大。 | 鏡頭從網路內側穿行，前景、中景、遠景以速度差形成明確視差；網路增長與旁白的 learn/reason/adapt 逐項同步。最終問句出現前，背景節點離開標題中心。 |
 | **03:18–03:30** | 結尾問題與品牌鎖定。 | 結尾問題先獨立、清楚落在中心；隨後粒子收束到使用者提供的圓形 Logo，品牌字和標語沿用 V4 已驗收的科技風格與間距。 | 避免圓形 Logo／亮環與文字相撞；標語和 Logo 皆保留畫面安全邊距，最後留足閱讀停留時間。 |
@@ -55,7 +55,7 @@ V5 的方向不是把使用者提供的 motion-design 參考片整套照搬：**
 1. **00:00–01:22：**開場、粒子重組決策樹、模式到因果預測；任務3依最新回饋改為同一自動駕駛城市案例，待確認3D空間和因果表達。
 2. **01:22–01:50：**Task4沿Route C接續同一車程；確認辨識框、示威移動後重算／改選Route A及跨行程記錄易理解並有足夠停留。
 3. **01:50–02:20：**算力成本與規模限制；Task5已通過使用者審閱。
-4. **02:20.4–02:44.35：**Task6四項能力共同組成AGI系統、保留未知缺口；目前製作中，待使用者審閱後才進Task7。
+4. **02:20.4–02:44.35:** Task 6 capability activation, central collision/burst, and rotating brain hologram; local A/V QA is complete and user review is pending. Start Task 7 only after Task 6 is approved.
 
 每段以現有旁白／音樂作同一主時鐘；通過該段後才進到下一段的精修。互動預覽仍不是交付母帶，最終才用 Puppeteer/Three.js 逐格算圖並 FFmpeg 封裝。
 

@@ -27,7 +27,7 @@ python3 -m http.server 8000
 
 ## V5 連續審核
 
-V5 使用**單一互動預覽頁與連續旁白時間軸**；目前整合00:00–02:44.35，使用同一個WebGL canvas及連續音軌播放。Task1／2以粒子與鏡頭狀態交接；Task3／4直接延續同一座城市、同一輛車與路線選擇；Task5將學習迴圈擴展成機房與資源成本；Task6由機房粒子過渡至推理、世界模型、學習及可靠性四個具體能力模組，再以未閉合系統缺口和時間地平線呈現未知，而不使用抽象門形。完整分鏡、3D視覺方向、轉場規則與審核關卡見 [`V5_REVISION_PROPOSAL.md`](V5_REVISION_PROPOSAL.md)。
+V5 使用**單一互動預覽頁與連續旁白時間軸**；目前整合00:00–02:44.35，使用同一個WebGL canvas及連續音軌播放。Task1／2以粒子與鏡頭狀態交接；Task3／4直接延續同一座城市、同一輛車與路線選擇；Task5將學習迴圈擴展成機房與資源成本；Task6保留四個具體能力模組，於「多項進展」時逐項啟動並向中心AI Model送訊號，接著加速環繞、碰撞爆散，再重組成自轉的人腦3D全息粒子模型。Brain點雲由repo內的CC BY 4.0範例模型確定性烘焙；來源與重現方式見 [`assets/models/README.md`](assets/models/README.md) 和 [`tools/extract_v5_brain_points.py`](tools/extract_v5_brain_points.py)。完整分鏡、3D視覺方向、轉場規則與審核關卡見 [`V5_REVISION_PROPOSAL.md`](V5_REVISION_PROPOSAL.md)。
 
 ## 專案內容
 
@@ -40,7 +40,9 @@ V5 使用**單一互動預覽頁與連續旁白時間軸**；目前整合00:00�
 - `src/v5_patterns_preview.js` — V5 第三任務的自動駕駛感知、封路成因、三路線機率預測及失配更新場景
 - `src/v5_learning_loop_preview.js` — V5 第四任務延續同一車程，使用Cyber掃描框、目標標籤、路線重算及跨行程記錄
 - `src/v5_compute_cost_preview.js` — V5 第五任務以立體計算網絡呈現晶片、能源、資料、時間及規模不保證通用智能
-- `src/v5_capability_system_preview.js` — V5 第六任務以四個具體能力模組、未閉合系統缺口與未知時間地平線呈現AGI的不確定性
+- `src/v5_capability_system_preview.js` — V5 Task 6: sequentially activate four capability modules, send signals into the AI model, then collide, burst into particles, and reform as a rotating brain hologram
+- `assets/models/v5_brain_surface_points.bin` — deterministic 4,600-point brain surface sampled from the credited CC BY 4.0 source model
+- `tools/extract_v5_brain_points.py` — reproducible, fixed-seed brain-mesh-to-particle asset generator
 - `src/v5_autodrive_world.js` — Task3／4共用城市道路、示威封路、立體車輛、檢測框與路線機率HUD
 - `assets/audio/v5_continuous_preview_01_50_00.mp3` — 前一版連續V5預覽音軌（00:00–01:50.00，已由2:20版取代）
 - `assets/audio/v5_continuous_preview_02_20_00.mp3` — 從原始無損混音裁出的Task5連續預覽音軌（00:00–02:20.00）
@@ -50,4 +52,4 @@ V5 使用**單一互動預覽頁與連續旁白時間軸**；目前整合00:00�
 - `render_v4.js` — Puppeteer／Chromium 逐格算圖工具；離線算圖時隱藏網頁控制列
 - `render/Super_Intelligent_AGI_Bottleneck_V4_1080p.mp4` — 最終成片規格記錄於 `V4_DELIVERY_NOTES.md`；大型成片未放入repo
 
-音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1至5已完成目前修訂且Task5已獲確認；Task6涵蓋02:20.4–02:44.35，以四種具體能力模組及未閉合未知缺口呈現多項進展如何共同構成智能，現待使用者審閱。**Task7待Task6通過後再開始。
+音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1至5已完成目前修訂且Task5已獲確認；Task6涵蓋02:20.4–02:44.35，新版畫面已完成本機逐格與章節音畫同步驗收，現待使用者審閱。**Task7待Task6通過後再開始。

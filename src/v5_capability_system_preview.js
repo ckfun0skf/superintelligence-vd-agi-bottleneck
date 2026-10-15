@@ -1,6 +1,11 @@
 import * as THREE from '../assets/vendor/three.module.js';
 import { C, clamp, smooth, win, basicMat, makeText, setTextAlpha, box, beam } from './v5_autodrive_world.js';
 
+const brainResponse = await fetch(new URL('../assets/models/v5_brain_surface_points.bin', import.meta.url));
+if (!brainResponse.ok) throw new Error(`Brain particle asset failed to load (${brainResponse.status}).`);
+const brainSurfacePositions = new Float32Array(await brainResponse.arrayBuffer());
+if (!brainSurfacePositions.length || brainSurfacePositions.length % 3) throw new Error('Brain particle asset is malformed.');
+
 // V5 Task 6 — No single barrier (02:20.4–02:44.35).
 // Four concrete capabilities converge on one incomplete AGI system; the open gap
 // is an unknown, not a fabricated fifth capability or a literal doorway.
@@ -73,7 +78,7 @@ const inMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, b
   fragmentShader: 'varying vec3 vColor; uniform float uOpacity; void main(){float d=length(gl_PointCoord-vec2(.5));float a=1.0-smoothstep(.08,.5,d);gl_FragColor=vec4(vColor,a*uOpacity);}' });
 scene.add(new THREE.Points(inGeo, inMat));
 let inheritedCamera = new THREE.Vector3(0, 3.05, 22.4), inheritedAim = new THREE.Vector3(0, .28, 0), inheritedStar = 0, incomingReady = false;
-const anchors = [new THREE.Vector3(-5.25, 1.05, -.8), new THREE.Vector3(-1.85, -1.0, 1.2), new THREE.Vector3(1.85, -1.0, 1.2), new THREE.Vector3(5.25, 1.05, -.8)];
+const anchors = [new THREE.Vector3(-6.25, 1.30, -.8), new THREE.Vector3(-2.65, -1.42, 1.2), new THREE.Vector3(2.65, -1.42, 1.2), new THREE.Vector3(6.25, 1.30, -.8)];
 function prepareIncoming() {
   if (incomingReady) return;
   const field = window.__V5_COMPUTE_EXIT_FIELD;
@@ -100,7 +105,7 @@ const moduleSpecs = [
 ];
 const modules = [];
 for (let i = 0; i < moduleSpecs.length; i++) {
-  const spec = moduleSpecs[i], root = new THREE.Group(); root.position.copy(spec.pos); scene.add(root);
+  const spec = moduleSpecs[i], root = new THREE.Group(); root.position.copy(spec.pos); root.scale.setScalar(1.22); scene.add(root);
   // Heavy base and one illuminated front edge make each capability read as a
   // physical system instead of a floating decorative node.
   box(root, 0, -1.02, 0, [2.65, .16, 1.62], 0x0b1722, .99, false);
@@ -146,7 +151,7 @@ const gapAngle = Math.PI*1.72;
 const ringEndA=glowBall(hub,1.16,0,0,.105,C.yellow,.85);
 const ringEndB=glowBall(hub,Math.cos(gapAngle)*1.16,Math.sin(gapAngle)*1.16,0,.105,C.yellow,.85);
 const missingSpark=glowBall(hub,.9,.43,.12,.075,C.yellow,0);
-const agiLabel=makeText(THREE,hub,'AGI?',{width:2.45,size:174,color:'#f2fcff',glow:'#55e5ff',x:0,y:-.12,z:.92});
+const agiLabel=makeText(THREE,hub,'AI MODEL',{width:2.75,size:142,color:'#f2fcff',glow:'#55e5ff',x:0,y:-.12,z:.92});
 const conduits=[];
 for(let i=0;i<modules.length;i++){
   const s=modules[i].pos, e=new THREE.Vector3(Math.sign(s.x)*.92,s.y*.18,-4.15), mid=new THREE.Vector3(s.x*.48,s.y*.40,-2.65);
@@ -155,39 +160,43 @@ for(let i=0;i<modules.length;i++){
   conduits.push({curve,line,pulse,phase:i*.19,color:modules[i].color});
 }
 
-// A sparse, perspective time horizon becomes visible only after the four known
-// modules retreat; these are unknown milestones, not a fabricated fifth module.
-const horizon = new THREE.Group(); scene.add(horizon);
-const horizonNodes=[];
-for(let i=0;i<9;i++){
-  const z=-5-i*2.35,x=Math.sin(i*1.71)*(.55+i*.08),y=Math.cos(i*1.31)*(.62+i*.05);
-  const node=glowBall(horizon,x,y,z,i%3===0?.11:.072,i%3===0?C.yellow:C.cyan,.88); horizonNodes.push({node,x,y,z,phase:i*.8});
+// Bake a compact point-cloud hologram from the CC-BY GLB in sample-3d/brain.html.
+// The point order and generated explosion vectors are seeded for frame-exact replay.
+function buildBrainLinks(positions) {
+  const cell=.22, radiusSq=cell*cell*1.7, grid=new Map(), links=[];
+  const key=(x,y,z)=>`${x},${y},${z}`;
+  for(let i=0;i<positions.length/3;i++){
+    const j=i*3,x=positions[j],y=positions[j+1],z=positions[j+2],cx=Math.floor(x/cell),cy=Math.floor(y/cell),cz=Math.floor(z/cell);
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){
+      const near=grid.get(key(cx+dx,cy+dy,cz+dz));if(!near)continue;
+      for(const k of near){const q=k*3,ax=x-positions[q],ay=y-positions[q+1],az=z-positions[q+2];if(ax*ax+ay*ay+az*az<radiusSq)links.push(x,y,z,positions[q],positions[q+1],positions[q+2]);}
+    }
+    const k=key(cx,cy,cz);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);
+  }
+  return new Float32Array(links);
 }
-const horizonCurves=[];
-for(let i=0;i<horizonNodes.length-1;i++){
-  const a=horizonNodes[i],b=horizonNodes[i+1],curve=new THREE.LineCurve3(new THREE.Vector3(a.x,a.y,a.z),new THREE.Vector3(b.x,b.y,b.z));
-  const link=new THREE.Line(new THREE.BufferGeometry().setFromPoints([curve.v1,curve.v2]),new THREE.LineBasicMaterial({color:0x318aff,transparent:true,opacity:.20,depthWrite:false,toneMapped:false})); horizon.add(link); horizonCurves.push(link);
+const brainCount=brainSurfacePositions.length/3,brainCount3=brainSurfacePositions.length;
+const brainGroup=new THREE.Group();brainGroup.position.set(0,.12,-4.65);brainGroup.scale.setScalar(1.34);scene.add(brainGroup);
+const brainMorphPositions=new Float32Array(brainCount3),brainColors=new Float32Array(brainCount3),burstDirections=new Float32Array(brainCount3),burstRadii=new Float32Array(brainCount);
+const brainBase=new THREE.Color(0x16b8ec),brainAccent=new THREE.Color(0x7d59ff);
+for(let i=0;i<brainCount;i++){
+  const j=i*3,mix=.06+random()*.30,col=brainBase.clone().lerp(brainAccent,mix);brainColors.set([col.r,col.g,col.b],j);
+  const z=random()*2-1,a=random()*Math.PI*2,r=Math.sqrt(1-z*z);burstDirections.set([r*Math.cos(a),z,r*Math.sin(a)],j);burstRadii[i]=2.35+random()*2.35;
 }
-// A literal, undated clock and physical timeline replace the abstract horizon
-// during the final question about when advances will arrive.
-const timeDisplay=new THREE.Group();timeDisplay.position.set(0,.12,-4.75);scene.add(timeDisplay);
-const clockFace=new THREE.Mesh(new THREE.CircleGeometry(1.12,64),basicMat(0x0b1824,.98,false));clockFace.position.z=.08;timeDisplay.add(clockFace);
-const clockRim=new THREE.Mesh(new THREE.TorusGeometry(1.18,.085,12,72),basicMat(C.yellow,.95,true));timeDisplay.add(clockRim);
-for(let i=0;i<12;i++){
-  const a=i*Math.PI/6,x=Math.sin(a),y=Math.cos(a),r=i%3===0?1.00:.94;
-  const mark=glowBall(timeDisplay,x*r,y*r,.17,i%3===0?.078:.045,i%3===0?C.yellow:C.ice,.96);
-}
-const hourHand=beam(timeDisplay,new THREE.Vector3(0,0,.23),new THREE.Vector3(.10,.55,.23),.055,C.ice,.98,true);
-const minuteHand=beam(timeDisplay,new THREE.Vector3(0,0,.26),new THREE.Vector3(.76,-.08,.26),.035,C.yellow,.98,true);
-const clockHub=glowBall(timeDisplay,0,0,.30,.095,C.ice,.99);
-const timeline=new THREE.Group();scene.add(timeline);
-beam(timeline,new THREE.Vector3(-5.4,-1.62,-3.35),new THREE.Vector3(5.4,-1.62,-3.35),.043,C.cyan,.78,true);
-for(let i=0;i<=10;i++){
-  const x=-5+i,major=i%2===0;
-  beam(timeline,new THREE.Vector3(x,-1.62,-3.35),new THREE.Vector3(x,-1.62+(major?.40:.22),-3.35),major?.035:.022,major?C.ice:C.blue,.82,true);
-  if([1,5,9].includes(i))glowBall(timeline,x,-1.53,-3.25,.11,i===5?C.yellow:C.cyan,.96);
-}
-const unknownQuestion=makeText(THREE,camera,'WHICH CAPABILITY?',{width:10.4,size:76,color:'#e7faff',glow:'#55e5ff',x:0,y:3.92,z:-16});
+const brainGeometry=new THREE.BufferGeometry();
+brainGeometry.setAttribute('position',new THREE.BufferAttribute(brainMorphPositions,3).setUsage(THREE.DynamicDrawUsage));
+brainGeometry.setAttribute('color',new THREE.BufferAttribute(brainColors,3));brainGeometry.boundingSphere=new THREE.Sphere(new THREE.Vector3(),8.2);
+const brainPointMat=new THREE.PointsMaterial({size:.024,vertexColors:true,transparent:true,opacity:.60,blending:THREE.NormalBlending,depthWrite:false,sizeAttenuation:true,toneMapped:false});brainPointMat.userData.baseOpacity=.60;
+const brainHaloMat=new THREE.PointsMaterial({size:.060,color:0x61cfff,transparent:true,opacity:.020,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,toneMapped:false});brainHaloMat.userData.baseOpacity=.020;
+brainGroup.add(new THREE.Points(brainGeometry,brainPointMat),new THREE.Points(brainGeometry,brainHaloMat));
+const brainLinkGeometry=new THREE.BufferGeometry();brainLinkGeometry.setAttribute('position',new THREE.BufferAttribute(buildBrainLinks(brainSurfacePositions),3));
+const brainLineMat=new THREE.LineBasicMaterial({color:0x3a84ff,transparent:true,opacity:.060,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});brainLineMat.userData.baseOpacity=.060;
+brainGroup.add(new THREE.LineSegments(brainLinkGeometry,brainLineMat));
+const impactGroup=new THREE.Group();impactGroup.position.copy(hub.position);scene.add(impactGroup);
+const impactRing=new THREE.Mesh(new THREE.TorusGeometry(.82,.045,10,72),basicMat(C.ice,0,true));impactGroup.add(impactRing);
+const impactRing2=new THREE.Mesh(new THREE.TorusGeometry(.82,.022,8,72),basicMat(C.yellow,0,true));impactGroup.add(impactRing2);
+const impactCore=glowBall(impactGroup,0,0,.02,.42,C.ice,0);
+const unknownQuestion=makeText(THREE,camera,'WHICH CAPABILITIES?',{width:11.8,size:74,color:'#e7faff',glow:'#55e5ff',x:0,y:3.92,z:-16});
 const whenQuestion=makeText(THREE,camera,'WHEN WILL THEY ARRIVE?',{width:11.4,size:74,color:'#fff0c6',glow:'#ffcf72',x:0,y:3.92,z:-16});
 const titleNoSingle=makeText(THREE,camera,'NO SINGLE BARRIER TO AGI',{width:14.2,size:74,color:'#e8fbff',glow:'#55e5ff',x:0,y:4.02,z:-16});
 const titleTogether=makeText(THREE,camera,'MANY ADVANCES. ONE SYSTEM.',{width:14.5,size:72,color:'#e8fbff',glow:'#55e5ff',x:0,y:4.02,z:-16});
@@ -200,10 +209,9 @@ function renderFrame(frame) {
     THREE.MathUtils.lerp(inheritedCamera.y,2.35,cameraBlend)+Math.sin(t*.09)*.12,
     THREE.MathUtils.lerp(inheritedCamera.z,23.4,cameraBlend)-finalPush*3.1);
   aim.copy(inheritedAim).lerp(new THREE.Vector3(0,0,-1.1),cameraBlend); aim.z-=finalPush*1.5; camera.lookAt(aim); camera.updateMatrixWorld(true);
-  // Rack, floor, and seed particles overlap for a short, readable handoff.
+  // Preserve the real server-room silhouette through the particle handoff.
   fadeGroup(rackEcho,1-smooth((t-.08)/.86)); fadeGroup(floorEcho,1-.62*smooth((t-.18)/.88));
-  const settle=smooth(t/1.04), particleAlpha=.72*(1-smooth((t-.62)/.74));
-  const p=inGeo.attributes.position.array;
+  const particleAlpha=.72*(1-smooth((t-.62)/.74)),p=inGeo.attributes.position.array;
   for(let i=0;i<IN;i++){
     const j=i*3,u=smooth(t/.88),arc=Math.sin(Math.PI*u)*.34;
     p[j]=THREE.MathUtils.lerp(inStart[j],inTarget[j],u);
@@ -213,42 +221,72 @@ function renderFrame(frame) {
   inGeo.attributes.position.needsUpdate=true; inMat.uniforms.uOpacity.value=particleAlpha;
   if(stars.material.uniforms?.uOpacity) stars.material.uniforms.uOpacity.value=starOpacity*(.90-.46*finalPush);
   stars.rotation.y=inheritedStar+t*.0009; stars.rotation.x=Math.sin(t*.035)*.004;
-  // First sentence: a single alleged bottleneck is questioned; no module is highlighted.
   setTextAlpha(titleNoSingle,win(t,.28,7.82,.30,.28));
-  // The four modules are staged one by one while the narration says advances work together.
-  setTextAlpha(titleTogether,win(t,8.04,12.35,.24,.30));
+  setTextAlpha(titleTogether,win(t,8.04,12.35,.10,.30));
+
+  const orbitStart=14.55,collisionTime=16.44,burstPeak=16.80,formEnd=17.84;
+  const orbit=clamp((t-orbitStart)/(collisionTime-orbitStart)),orbitEased=orbit*orbit;
   modules.forEach((m,i)=>{
-    const latent=.28*win(t,1.18,8.06,.72,.28), revealed=win(t,8.24+i*.72,20.32,.42,.34), a=Math.max(latent,revealed); fadeGroup(m.root,a);
-    setTextAlpha(m.name,win(t,8.20+i*.72,20.25,.38,.32));
-    if(m.pulse&&m.route){const u=(t*.42)%1;m.pulse.position.copy(m.route.getPointAt(u));m.pulse.material.opacity=.98*a;}
+    const activateAt=8.08+i*.72;
+    const latent=.28*win(t,1.18,activateAt,.72,.16),activated=win(t,activateAt,collisionTime,.20,.20);
+    let orbitAlpha=1;
+    if(t>=orbitStart){
+      const x=m.pos.x,y=m.pos.y-.10,r0=Math.hypot(x,y/.70),theta0=Math.atan2(y/.70,x);
+      const turn=theta0+Math.PI*3.3*orbitEased,r=THREE.MathUtils.lerp(r0,.10,smooth(orbit));
+      m.root.position.set(Math.cos(turn)*r,.10+Math.sin(turn)*r*.70,THREE.MathUtils.lerp(m.pos.z,-4.65,smooth(orbit)));
+      const impactShrink=smooth((orbit-.78)/.22);m.root.scale.setScalar(1.22*(1-.72*impactShrink));
+      m.root.rotation.y=.12*Math.sin(turn);
+      orbitAlpha=1-smooth((orbit-.72)/.28);
+    }else{m.root.position.copy(m.pos);m.root.scale.setScalar(1.22);m.root.rotation.y=0;}
+    const alpha=Math.max(latent,activated)*orbitAlpha;fadeGroup(m.root,alpha);
+    const labelOrbitAlpha=t<orbitStart?1:1-smooth((orbit-.16)/.36);setTextAlpha(m.name,activated*labelOrbitAlpha);
+    if(m.pulse&&m.route){const u=(t*.42)%1;m.pulse.position.copy(m.route.getPointAt(u));m.pulse.material.opacity=.98*alpha;}
     if(m.cube){m.cube.position.y=.38+.50*Math.abs(Math.sin((t-8.8)*2.25));m.cube.rotation.set((t-8.8)*.76,(t-8.8)*.94,(t-8.8)*1.05);m.cubeEdge.position.copy(m.cube.position);m.cubeEdge.rotation.copy(m.cube.rotation);}
-    if(m.loopPulse){const u=(t*.17+.11)%1,aPos=m.loop.geometry.parameters?.radius||.65;const ang=u*Math.PI*2;m.loopPulse.position.set(Math.cos(ang)*aPos, .25+Math.sin(ang)*aPos,.40);}
+    if(m.loopPulse){const u=(t*.17+.11)%1,aPos=m.loop.geometry.parameters?.radius||.65,ang=u*Math.PI*2;m.loopPulse.position.set(Math.cos(ang)*aPos,.25+Math.sin(ang)*aPos,.40);}
   });
-  const feeds=win(t,9.05,17.65,.45,.38);
+
+  // Each newly activated capability opens a dedicated tether and sends a signal
+  // pulse toward the central AI Model; all four stay active until the orbit begins.
   conduits.forEach((c,i)=>{
-    const on=feeds*(1-smooth((t-13.4)/.75)); c.line.material.opacity=.70*on;
-    const u=(t*.21+c.phase)%1;c.pulse.position.copy(c.curve.getPointAt(u));c.pulse.material.opacity=.98*on;
+    const activateAt=8.08+i*.72,on=win(t,activateAt,orbitStart,.18,.22),elapsed=Math.max(0,t-activateAt);
+    c.line.material.opacity=.76*on;
+    const u=(elapsed*1.08)%1;c.pulse.position.copy(c.curve.getPointAt(u));
+    c.pulse.material.opacity=.98*on*(.46+.54*Math.pow(Math.sin(elapsed*3.4),6));
   });
-  const coreA=win(t,8.12,20.36,.5,.58); fadeGroup(hub,coreA);
-  const missing=win(t,13.7,18.1,.55,.45);
+  const coreA=win(t,8.12,collisionTime,.5,.08);fadeGroup(hub,coreA);
+  const missing=win(t,orbitStart,burstPeak+.22,.16,.30);
   missingSpark.material.opacity=.96*missing*(.45+.55*Math.sin(t*9)**2);
-  ringEndA.material.opacity=.92*coreA*(.40+.60*missing); ringEndB.material.opacity=.92*coreA*(.40+.60*missing);
+  ringEndA.material.opacity=.92*coreA*(.40+.60*missing);ringEndB.material.opacity=.92*coreA*(.40+.60*missing);
   setTextAlpha(agiLabel,coreA);
-  setTextAlpha(titleMissing,win(t,13.48,17.15,.28,.16));
-  // The decisive capability and arrival time remain unknown; known modules clear first.
-  const unknown=win(t,17.34,23.98,.30,.20),clockA=win(t,20.28,23.98,.42,.18),knownExit=1-smooth((t-20.0)/.45);
-  fadeGroup(horizon,unknown*(1-.92*clockA)); fadeGroup(timeDisplay,clockA); fadeGroup(timeline,clockA);
+  setTextAlpha(titleMissing,win(t,orbitStart,17.16,.18,.12));
+
+  // A single impact throws the same deterministic particles outward, then draws
+  // them back onto the CC-BY brain surface as the next sentence begins.
+  const burstStart=collisionTime-.08,launch=clamp((t-burstStart)/(burstPeak-burstStart)),expansion=1-Math.pow(1-launch,3),formation=smooth((t-burstPeak)/(formEnd-burstPeak));
+  for(let i=0;i<brainCount;i++){
+    const j=i*3,r=burstRadii[i]*expansion;
+    brainMorphPositions[j]=THREE.MathUtils.lerp(burstDirections[j]*r,brainSurfacePositions[j],formation);
+    brainMorphPositions[j+1]=THREE.MathUtils.lerp(burstDirections[j+1]*r,brainSurfacePositions[j+1],formation);
+    brainMorphPositions[j+2]=THREE.MathUtils.lerp(burstDirections[j+2]*r,brainSurfacePositions[j+2],formation);
+  }
+  brainGeometry.attributes.position.needsUpdate=true;
+  const brainAlpha=smooth((t-(collisionTime-.08))/.12);brainGroup.visible=brainAlpha>.006;
+  brainGroup.rotation.y=(t-burstPeak)*.78;brainGroup.rotation.x=.07+Math.sin(t*.34)*.055;brainGroup.rotation.z=Math.sin(t*.21)*.035;
+  brainPointMat.opacity=.60*brainAlpha;brainHaloMat.opacity=.020*brainAlpha;brainLineMat.opacity=.060*brainAlpha*formation;
+  const impact=win(t,collisionTime,collisionTime+.68,.035,.30),impactProgress=clamp((t-collisionTime)/.68);
+  impactGroup.visible=impact>.004;impactRing.scale.setScalar(.55+impactProgress*4.2);impactRing2.scale.setScalar(.65+impactProgress*3.55);
+  impactRing.material.opacity=.95*impact*(1-.24*impactProgress);impactRing2.material.opacity=.84*impact;
+  impactCore.material.opacity=.92*impact*(1-smooth(impactProgress/.30));
+
   setTextAlpha(unknownQuestion,win(t,17.20,20.38,.16,.24));
   setTextAlpha(whenQuestion,win(t,20.40,23.98,.22,.18));
-  hourHand.rotation.z=Math.sin(t*2.1)*.52; minuteHand.rotation.z=-t*1.4;
-  horizonNodes.forEach(n=>{n.node.position.x=n.x+Math.sin(t*.43+n.phase)*.15;n.node.position.y=n.y+Math.cos(t*.37+n.phase)*.12;});
-  conduits.forEach(c=>{if(t>17.0)c.line.material.opacity=.70*feeds*knownExit;});
   if(t>=DURATION-1/FPS){
-    const positions=new Float32Array(horizonNodes.length*3),colors=new Float32Array(horizonNodes.length*3);
-    horizonNodes.forEach((n,i)=>{positions.set([n.node.position.x,n.node.position.y,n.node.position.z],i*3);const q=new THREE.Color(i%3===0?C.yellow:C.cyan);colors.set([q.r,q.g,q.b],i*3);});
-    window.__V5_CAPABILITY_EXIT_FIELD={count:horizonNodes.length,positions,colors,cameraPosition:camera.position.clone(),cameraTarget:aim.clone(),starRotationY:stars.rotation.y};
+    brainGroup.updateMatrixWorld(true);
+    const positions=new Float32Array(brainCount3),colors=new Float32Array(brainCount3),v=new THREE.Vector3();
+    for(let i=0;i<brainCount;i++){const j=i*3;v.set(brainMorphPositions[j],brainMorphPositions[j+1],brainMorphPositions[j+2]).applyMatrix4(brainGroup.matrixWorld);positions.set([v.x,v.y,v.z],j);colors.set(brainColors.subarray(j,j+3),j);}
+    window.__V5_CAPABILITY_EXIT_FIELD={count:brainCount,positions,colors,cameraPosition:camera.position.clone(),cameraTarget:aim.clone(),starRotationY:stars.rotation.y};
   }
-  renderer.render(scene,camera); window.__sceneTime=t;
+  renderer.render(scene,camera);window.__sceneTime=t;
 }
 function resize(){const w=Math.max(1,host.clientWidth||window.innerWidth),h=Math.max(1,host.clientHeight||Math.round(w*9/16));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(standalone)renderFrame(Math.round((window.__playerTime||140.38)*FPS)-Math.round(140.38*FPS));}
 if(standalone){window.renderFrame=renderFrame;window.__sceneReady=true;window.addEventListener('resize',resize);resize();renderFrame(0);window.dispatchEvent(new Event('v5scene-ready'));}
