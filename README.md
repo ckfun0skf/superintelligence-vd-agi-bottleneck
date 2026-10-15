@@ -6,8 +6,9 @@ V4 的確定性 Three.js/WebGL 動態紀錄片與音畫同步互動預覽；V5 �
 
 - [V4 全片互動預覽](https://ckfun0skf.github.io/superintelligence-vd-agi-bottleneck/)
 - [V5 連續預覽：任務1至9（00:00–03:30.00）](https://ckfun0skf.github.io/superintelligence-vd-agi-bottleneck/v5-preview.html)
+- [V6 連續預覽：單頁全片（00:00–03:30.00）](https://ckfun0skf.github.io/superintelligence-vd-agi-bottleneck/v6-preview.html)
 
-V5 單頁使用原旁白／配樂作音訊主時鐘，同步畫面；控制列、時間軸及細分章節均位於畫布下方。無需先輸出 MP4 即可聽看、拖曳及逐段檢查。V4 原有預覽與成片保留不變。
+V5／V6 單頁使用完整旁白／配樂作音訊主時鐘，同步畫面；控制列、時間軸及細分章節均位於畫布下方。無需先輸出 MP4 即可聽看、拖曳及逐段檢查。V4、V5 原有預覽與成片保留不變。
 
 V4 全片播放器使用 `assets/audio/final_mix.mp3` 作主時鐘。播放／暫停、時間軸拖曳、倍速及章節跳轉都會同步音訊與畫面；章節列可收合但主要控制仍保留。首次播放請按 **播放**（瀏覽器要求使用者操作後才能播放聲音）。
 
@@ -33,6 +34,12 @@ V5 使用**單一互動預覽頁與連續旁白／配樂時間軸**；目前整�
 
 - `index.html` — V4 16:9 畫布與其下方的播放器、時間軸、章節跳轉及同步音軌；提供V5預覽入口
 - `v5-preview.html` — 唯一V5互動預覽頁，單一音軌／時間軸涵蓋00:00–03:30.00，章節控制位於畫布下方
+- `v6-preview.html` — V6 單頁互動預覽，單一音軌／時間軸涵蓋00:00–03:30.00，保留V5頁面不變
+- `src/v6_continuous_preview.js` — V6 單一renderer、連續音訊主時鐘與場景交接總控
+- `src/v6_opening_preview.js`、`src/v6_reasoning_preview.js` — V6 開場高容量資料處理引擎及Expected Result標記
+- `src/v6_autodrive_world.js`、`src/v6_patterns_preview.js`、`src/v6_learning_loop_preview.js` — V6 自駕場景共用HUD與平滑路線概率更新
+- `src/v6_closing_brand_preview.js` — V6第一身穿越突破門、星塵組成片尾問題與品牌收束
+- `assets/audio/v6_continuous_preview_03_30_00.mp3` — V6全片同步預覽音軌（00:00–03:30.00）
 - `src/v5_continuous_preview.js` — 單一renderer及跨場景粒子／相機handoff總控
 - `src/v4_particle_documentary.js` — 保留的 V4 Three.js 全片場景
 - `src/v5_opening_preview.js` — V5 第一任務的可重現 3D 開場場景與即時播放器同步
@@ -56,4 +63,4 @@ V5 使用**單一互動預覽頁與連續旁白／配樂時間軸**；目前整�
 - `render_v4.js` — Puppeteer／Chromium 逐格算圖工具；離線算圖時隱藏網頁控制列
 - `render/Super_Intelligent_AGI_Bottleneck_V4_1080p.mp4` — 最終成片規格記錄於 `V4_DELIVERY_NOTES.md`；大型成片未放入repo
 
-音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**任務1至8已獲確認；Task7星塵飛行方向獲正面回饋，並由Task8延續說明其探測車身分；Task9片尾已完成本機視覺／音畫同步QA，目前等待使用者審閱；全片算圖尚未開始。**
+音訊資產清單及來源格式見 [`assets/audio/README.md`](assets/audio/README.md)。**V5任務1至8已獲確認；Task7星塵飛行方向獲正面回饋，並由Task8延續說明其探測車身分。V6已完成本機瀏覽器視覺／同步QA並等待使用者審閱；V6全片算圖尚未開始。**
