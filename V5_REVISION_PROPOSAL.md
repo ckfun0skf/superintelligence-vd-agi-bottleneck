@@ -1,6 +1,6 @@
 # SUPER INTELLIGENT — V5 視覺修訂提案
 
-**Status: Tasks 1–2 have passed review; Tasks 3–4 share the autonomous-driving roadblock example; Tasks 5–6 are approved. Task 6 (02:20.4–02:44.35) stages four persistent capability modules that activate one by one and send pulses into the AI Model, then collide, burst, and reform into a rotating 3D brain hologram. Task 7 (02:44.35–03:00.00) is the instrumental bridge after the spoken uncertainty question and before the next narration starts at 03:00.70; its date-free 3D horizon carries the same brain particles into a field of shifting candidate paths. Task 7 is complete and awaits user review. Full-film rendering has not started.**
+**Status: Tasks 1–2 have passed review; Tasks 3–4 share the autonomous-driving roadblock example; Tasks 5–6 are approved. Task 6 (02:20.4–02:44.35) stages four persistent capability modules that activate one by one and send pulses into the AI Model, then collide, burst, and reform into a rotating 3D brain hologram. Task 7 has been revised per user direction: slowly push through the brain, accelerate and roll through 3D star dust from a first-person camera, then gather the same particles into an explorer rover and an unfamiliar obstacle when new music begins at 02:57.455; the preview runs through the next narration start at 03:00.70. The revision has passed local visual and audio-sync QA and is ready for user review. Full-film rendering and the full Task 8 scene have not started.**
 
 ## 一、V5 目標
 
@@ -29,7 +29,7 @@ V5 的方向不是把使用者提供的 motion-design 參考片整套照搬：**
 | **01:22–01:50** | 人類會提問、做實驗、從失敗學習和改變想法；AI可做部分步驟，但長期可靠學習、決定下一步查什麼和自行修錯仍是挑戰。 | 同一車輛沿Task3末段Route C續行至目的地。之後明確開始新一趟行程，顯示A 88%、B 0%、C 12%（A綠、B封鎖紅、C黃），並沿Route A由起點行至目的地；示威移動、路線狀態與機率更新同步發生。長期學習以不同車程的預測／實際結果紀錄呈現，結尾保留尚未解決的新路況。 | 保持同一城市及機率語意；封鎖路線即使排名變化仍保持紅色，互斥機率合計100%。車輛沿連續道路曲線行駛、不倒退跳位，並在跨行程紀錄出現前抵達終點；旅行切換以明確的 `TRIP 03 · START → DESTINATION · ROUTE A` 標記說明。 |
 | **01:50–02:20** | 智能擴展需要晶片／計算、能源、資料和時間；規模增加不保證通用或可靠智能；品質有成本。 | 保留四種可辨識資源輸入匯入模型，但讓它們的作用看得見：計算節點忙碌、能量流逐漸下降、資料樣本被使用、時間環走過。更大的資源流產生更多輸出，卻在陌生測試中失敗，直接呈現「規模 ≠ 保證」。只有旁白提出可靠度與成本取捨時，才讓兩條輸出／成本尺度並排出現。 | 資源輸入到模型的連線加粗，關鍵箭頭需能在 1080p 清楚看見；標籤和圖示留在標題安全區內。避免靜態四角標籤、過幼線條、成本條在旁白尚未談成本前提早出現。 |
 | **02:20.4–02:44.35** | “Perhaps there is no single barrier to AGI”; multiple advances work together; current approaches may be missing something fundamental; it remains unknown which capability will matter or when. | Preserve all four capability shapes as they dim after “no single barrier.” At “many advances,” activate them one at a time without clearing/rebuilding them; each activation lights a dedicated tether and sends a moving pulse into the central AI Model. During “missing something fundamental,” accelerate the four modules around the center and pull them into a collision, then burst their deterministic particles outward. At “which capabilities / when,” reform the same particles into a rotating blue 3D brain hologram, with the unknown questions above; hold the final question through the following instrumental bridge before the next narration begins. | Continue from Task 5’s real server-room particle/camera handoff. Keep modules larger and spaced apart before the orbit; fade labels before they overlap. Time the collision near 02:36–02:37 and complete the brain silhouette around 02:38. Use a seeded point cloud sampled from the credited CC BY 4.0 GLB embedded by the user-provided `sample-3d/brain.html`. Preview runs 140.38–164.35 s to retain the spoken tail. |
-| **02:44.35–03:00** | 音樂橋段；前句「which capabilities…or when they will arrive」已於 02:44.22 結束，下一句 “AGI may not require…” 於 03:00.70 開始。此處以畫面延續未知感，不虛構旁白。 | Task 6 的人腦點雲不硬切：保留一瞬後展成四條無日期刻度、向遠方收斂的立體時間軌道；四個可辨識能力符號沿各自路徑漂移並交換先後，不給固定預測日期或唯一答案。用一行 `NO CERTAIN TIMELINE` 作短暫閱讀重點，尾段推向共同遠方。 | 完全沿用Task6最後一格的人腦粒子、相機與星場作入口；深度透視清楚，但不再畫門、日曆或抽象連線。於03:00前把軌道收向遠方並輸出粒子handoff，接上下一段。 |
+| **02:44.35–03:00.70** | 前一句「which capabilities…or when they will arrive」在02:44.22結束；純音樂橋段到下一首配樂於**02:57.455**切入；下一句 “AGI may not require a machine that knows everything” 約於**03:00.70**開始。 | Task6的腦部全息保留開場後慢慢放大；鏡頭穿入腦部，近景粒子變成太空星塵，切成第一身太空船視角高速向前飛、左右轉向及翻滾。新配樂切入時，同一批星塵開始聚合，先形成一部小型探索機器，再顯出前方陌生障礙與可分岔路徑，作為下一幕開端，不加無旁白字幕。 | 第一格精確沿用Task6末格Brain粒子／相機；先讓Brain完全充滿16:9畫面，再只看見粒子星塵。星軌只作短小獨立拖影，不互相亂連。聚合起點鎖在原混音比對出的177.455秒，於180.70秒下一句開始時保留清楚的Task8場景雛形與輸出粒子狀態。 |
 | **03:00–03:18** | 通用智能要學習、推理並適應陌生情境；究竟會走到哪裡仍不確定。 | 保留會向外成長的 3D 神經／能力網，但讓外圍情境有不同形狀和深度：新輸入造成路徑中斷，核心重新連接、修正並把新經驗保留下來；另一種陌生輸入出現時能沿用已學路徑又作調整。讓觀眾看到 transfer/adaptation，而非只看網路變大。 | 鏡頭從網路內側穿行，前景、中景、遠景以速度差形成明確視差；網路增長與旁白的 learn/reason/adapt 逐項同步。最終問句出現前，背景節點離開標題中心。 |
 | **03:18–03:30** | 結尾問題與品牌鎖定。 | 結尾問題先獨立、清楚落在中心；隨後粒子收束到使用者提供的圓形 Logo，品牌字和標語沿用 V4 已驗收的科技風格與間距。 | 避免圓形 Logo／亮環與文字相撞；標語和 Logo 皆保留畫面安全邊距，最後留足閱讀停留時間。 |
 
@@ -56,7 +56,7 @@ V5 的方向不是把使用者提供的 motion-design 參考片整套照搬：**
 2. **01:22–01:50：**Task4沿Route C接續同一車程；確認辨識框、示威移動後重算／改選Route A及跨行程記錄易理解並有足夠停留。
 3. **01:50–02:20：**算力成本與規模限制；Task5已通過使用者審閱。
 4. **02:20.4–02:44.35:** Task 6 capability activation, central collision/burst, and rotating brain hologram; approved.
-5. **02:44.35–03:00.00:** Task 7 instrumental uncertainty bridge; date-free 3D horizon preview is complete and ready for user review. The next narration starts at 03:00.70.
+5. **02:44.35–03:00.70:** Task 7 cinematic brain-to-star-dust flight and opening handoff; the revised preview has passed local visual/audio-sync QA and is ready for user review. New music enters at 02:57.455; the next narration begins at 03:00.70.
 
 每段以現有旁白／音樂作同一主時鐘；通過該段後才進到下一段的精修。互動預覽仍不是交付母帶，最終才用 Puppeteer/Three.js 逐格算圖並 FFmpeg 封裝。
 
@@ -71,7 +71,7 @@ V5 的方向不是把使用者提供的 motion-design 參考片整套照搬：**
 - 不更改英文旁白或重新生成旁白／配樂。
 - 不將使用者提供的 motion-design 參考片直接複製成 HUD、平面網格或版型。
 - 不先生成一條完整 3:30 MP4；先用同步網頁和分段預覽降低等待與反覆算圖成本。
-- 其餘任務仍遵循分段審核：目前00:00–03:00.00的連續預覽包含Task7，待使用者審閱；Task7獲確認後才開始Task8，不提前全片算圖。
+- 其餘任務仍遵循分段審核：目前00:00–03:00.70的連續預覽包含Task7及Task8開場交接；Task7獲確認後才開始Task8完整場景，不提前全片算圖。
 
 ---
 
