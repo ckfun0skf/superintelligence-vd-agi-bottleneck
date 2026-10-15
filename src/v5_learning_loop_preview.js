@@ -74,7 +74,7 @@ const investigateTag = makeText(THREE, world.city, 'CHECK NORTH DETOUR', { width
 
 function setHeadlines(t) {
   const windows = {
-    information: [0, 3.25], identify: [3.30, 6.25], predict: [6.3, 9.55], mismatch: [9.55, 11.35], revise: [11.35, 13.2], partial: [13.2, 17.05], longTerm: [17.15, 21.12], investigate: [21.12, 23.62], correct: [23.62, 26.0], challenge: [25.92, 28.0],
+    information: [0, 3.25], identify: [3.30, 6.25], predict: [6.3, 9.55], mismatch: [9.55, 11.35], revise: [11.35, 13.2], partial: [13.2, 17.05], longTerm: [17.15, 21.12], investigate: [21.12, 23.62], correct: [23.62, 26.0], challenge: [25.92, 27.78],
   };
   for (const [key, s] of Object.entries(headlines)) { const [a, b] = windows[key]; setTextAlpha(s, win(t, a, b, .18, .18)); }
   sourceLabels.forEach(s => setTextAlpha(s, win(t, .25, 3.2, .20, .25)));
@@ -104,7 +104,7 @@ function renderFrame(frame) {
   const p = inGeo.attributes.position.array, form = smooth(t / .78);
   for (let i = 0; i < IN; i++) { const j = i * 3; p[j] = THREE.MathUtils.lerp(inSource[j], mapTargets[j], form); p[j + 1] = THREE.MathUtils.lerp(inSource[j + 1], mapTargets[j + 1], form); p[j + 2] = THREE.MathUtils.lerp(inSource[j + 2], mapTargets[j + 2], form); }
   inGeo.attributes.position.needsUpdate = true; inMat.uniforms.uOpacity.value = 0;
-  const cityAlpha = 1 - smooth((t - 27.78) / .18); setAlpha(world.city, cityAlpha); world.city.visible = cityAlpha > .005;
+  const cityAlpha = 1 - smooth((t - 26.88) / 1.12); setAlpha(world.city, cityAlpha); world.city.visible = cityAlpha > .005;
   const spread = 1;
   world.setCrowdSpread(spread);
   const protestMove = smooth((t - 9.52) / 1.20); world.protest.position.set(-3 + protestMove * 8, -0.24, protestMove * 5); if (protestMove > .62) world.spillover.visible = false;
@@ -121,9 +121,9 @@ function renderFrame(frame) {
   const histor = win(t, 17.2, 21.12, .20, .25); if (histor > 0) probabilities.show(Math.max(oldPred, newPred) * (1 - histor), routeScores, routeChoice, blockedRoutes);
   setTextAlpha(nextTripLabel, win(t, 11.2, 17.15, .22, .24));
   setHeadlines(t);
-  const outStart = 27.05, mix = smooth((t - outStart) / .8), op = smooth((t - outStart) / .16), q = outGeo.attributes.position.array;
+  const outStart = 26.84, mix = smooth((t - outStart) / 1.08), q = outGeo.attributes.position.array;
   for (let i = 0; i < OUT; i++) { const j = i * 3; q[j] = outTarget[j] + Math.sin(i * 5.1 + t) * .09 * mix; q[j + 1] = outTarget[j + 1] + .10 + (1 - mix) * .20; q[j + 2] = outTarget[j + 2] + Math.cos(i * 9.2 + t) * .09 * mix; }
-  outGeo.attributes.position.needsUpdate = true; outMat.uniforms.uOpacity.value = .50 * smooth((t - 27.80) / .20);
+  outGeo.attributes.position.needsUpdate = true; outMat.uniforms.uOpacity.value = .64 * smooth((t - 26.82) / .28);
   const camBlend = smooth(t / .65); camera.position.copy(inheritedCamera).lerp(new THREE.Vector3(0, 22.5, 25.5), camBlend); aim.copy(inheritedAim).lerp(new THREE.Vector3(0, 0, 0), camBlend); camera.lookAt(aim);
   const focus = smooth((t - 21.0) / 2.0); camera.position.x = Math.sin(t * .11) * .25 + focus * 1.0; camera.position.z = 25.5 - focus * .6; camera.lookAt(aim); camera.updateMatrixWorld(true);
   const detect = win(t, 3.15, 6.18, .28, .34); world.setDetection(t + .6, detect * cityAlpha, Math.max(0, (t - 3.55) / .52));

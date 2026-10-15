@@ -259,7 +259,7 @@ function renderFrame(frame) {
   const t = clamp(Number(frame) / FPS, 0, DURATION); prepareIncoming();
   const reveal = smooth(t / .95);
   for (let i=0;i<IN;i++) { const j=i*3; inPos[j]=THREE.MathUtils.lerp(inSource[j],inTarget[j],reveal); inPos[j+1]=THREE.MathUtils.lerp(inSource[j+1],inTarget[j+1],reveal); inPos[j+2]=THREE.MathUtils.lerp(inSource[j+2],inTarget[j+2],reveal); }
-  inGeo.attributes.position.needsUpdate=true; inMat.uniforms.uOpacity.value=.12*(1-smooth(t/.50));
+  inGeo.attributes.position.needsUpdate=true; inMat.uniforms.uOpacity.value=.68*(1-smooth(t/.92));
 
   // Large first, then pull back and reveal the recognizable server-room scale.
   const pull = smooth(t / 6.0), expanded = smooth((t - 17.1) / 1.5);
@@ -269,12 +269,13 @@ function renderFrame(frame) {
   camera.position.set(THREE.MathUtils.lerp(inheritedCamera.x,0,settle),THREE.MathUtils.lerp(THREE.MathUtils.clamp(inheritedCamera.y,.8,4.5),introCamY,settle),THREE.MathUtils.lerp(THREE.MathUtils.clamp(inheritedCamera.z,12,25),introCamZ,settle));
   let panX = -1.85 * smooth((t-20.3)/.75) * (1-smooth((t-24.1)/.85));
   camera.position.x += panX; camera.lookAt(aim.set(0,.28,0)); camera.updateMatrixWorld(true);
+  const roomReveal = smooth(t/.92); fadeGroup(floor,roomReveal);
   rackBank.position.x = 0;
   const introScale = THREE.MathUtils.lerp(1.34,.94,pull);
   for (const unit of rackUnits) {
     const spec=rackSpecs[unit.index];
     const phase = unit.index===0 ? 0 : spec.start;
-    let a = unit.index===0 ? .78+.22*smooth(t/.34) : smooth((t-phase)/.9);
+    let a = unit.index===0 ? smooth(t/.92) : smooth((t-phase)/.9);
     if (unit.index>=3) a *= smooth((t-17.0)/1.1);
     unit.g.visible=a>.006;
     unit.g.position.x=THREE.MathUtils.lerp(spec.x*1.5,spec.x,smooth((t-phase)/1.0));
