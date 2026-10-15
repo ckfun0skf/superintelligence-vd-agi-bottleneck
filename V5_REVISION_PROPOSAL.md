@@ -1,6 +1,6 @@
 # SUPER INTELLIGENT — V5 視覺修訂提案
 
-**Status: Tasks 1–6 are complete and approved (Tasks 3–4 use the shared autonomous-driving roadblock example). Task 7 received positive direction feedback; its 02:57.455 star-dust-to-rover handoff is now clarified by the complete Task 8 scene. Task 8 (03:00.70–03:18.00) is implemented as a six-wheel exploration rover learning an obstacle, reasoning between routes, adapting its suspension and route across unfamiliar terrain, then facing an uncertain horizon. The continuous preview has passed local visual and audio-sync QA and is ready for user review. Task 9 and full-film rendering have not started.**
+**Status: Tasks 1–8 are complete and approved (Tasks 3–4 use the shared autonomous-driving roadblock example). Task 7 received positive direction feedback; its 02:57.455 star-dust-to-rover handoff is clarified by Task 8. Task 9 (03:18.00–03:30.00) continues the same horizon, lights a physical path of breakthroughs, reveals the final question on “what,” and resolves to the supplied circular logo and larger technical wordmark. The 00:00–03:30 continuous preview has passed local visual and audio-sync QA and is ready for user review. Full-film rendering has not started.**
 
 ## 一、V5 目標
 
@@ -31,7 +31,7 @@ V5 的方向不是把使用者提供的 motion-design 參考片整套照搬：**
 | **02:20.4–02:44.35** | “Perhaps there is no single barrier to AGI”; multiple advances work together; current approaches may be missing something fundamental; it remains unknown which capability will matter or when. | Preserve all four capability shapes as they dim after “no single barrier.” At “many advances,” activate them one at a time without clearing/rebuilding them; each activation lights a dedicated tether and sends a moving pulse into the central AI Model. During “missing something fundamental,” accelerate the four modules around the center and pull them into a collision, then burst their deterministic particles outward. At “which capabilities / when,” reform the same particles into a rotating blue 3D brain hologram, with the unknown questions above; hold the final question through the following instrumental bridge before the next narration begins. | Continue from Task 5’s real server-room particle/camera handoff. Keep modules larger and spaced apart before the orbit; fade labels before they overlap. Time the collision near 02:36–02:37 and complete the brain silhouette around 02:38. Use a seeded point cloud sampled from the credited CC BY 4.0 GLB embedded by the user-provided `sample-3d/brain.html`. Preview runs 140.38–164.35 s to retain the spoken tail. |
 | **02:44.35–03:00.70** | 前一句「which capabilities…or when they will arrive」在02:44.22結束；純音樂橋段到下一首配樂於**02:57.455**切入；下一句 “AGI may not require a machine that knows everything” 約於**03:00.70**開始。 | Task6的腦部全息保留開場後慢慢放大；鏡頭穿入腦部，近景粒子變成太空星塵，切成第一身太空船視角高速向前飛、左右轉向及翻滾。新配樂切入時，同一批星塵開始聚合，先形成一部小型探索機器，再顯出前方陌生障礙與可分岔路徑，作為下一幕開端，不加無旁白字幕。 | 第一格精確沿用Task6末格Brain粒子／相機；先讓Brain完全充滿16:9畫面，再只看見粒子星塵。星軌只作短小獨立拖影，不互相亂連。聚合起點鎖在原混音比對出的177.455秒，於180.70秒下一句開始時保留清楚的Task8場景雛形與輸出粒子狀態。 |
 | **03:00.70–03:18.00** | “AGI may not require a machine that knows everything. It may require a system that can learn, reason, and adapt across an extraordinary range of unfamiliar situations. The destination remains uncertain.” | 從Task7星塵聚成的機器開始，鏡頭揭示一輛有六個獨立輪組、懸吊、雙眼相機和感測桅杆的**野外探測車**。它掃描擋路岩石、記錄障礙並把直行失敗路徑標紅（learn）；並排顯示撞岩直線、陡坡路與綠色安全繞行路（reason）；選路後以獨立輪組上下伸縮並在新裂溝前重新改道（adapt）。鏡頭跟車穿越岩石、橫向裂溝及窄門三種具體陌生地形；最後車輛到達未勘測地平線，路徑在霧中中止並出現“DESTINATION UNCERTAIN”。 | Task7最後相機、星場、點雲與機器／路面物件直接複製到Task8開場，先看見同一輛小車，再在首秒逐步揭示其六輪探測車結構。learn/reason/adapt三個字分別貼合逐字時間碼（03:07.86、03:08.80、03:09.86）；不使用抽象神經網路代替適應過程，不讓多條路線遮住車輛或物理路面。Task8於03:18.00收束，下一句“but every breakthrough”保留給Task9。 |
-| **03:18–03:30** | 結尾問題與品牌鎖定。 | 結尾問題先獨立、清楚落在中心；隨後粒子收束到使用者提供的圓形 Logo，品牌字和標語沿用 V4 已驗收的科技風格與間距。 | 避免圓形 Logo／亮環與文字相撞；標語和 Logo 皆保留畫面安全邊距，最後留足閱讀停留時間。 |
+| **03:18–03:30** | “but every breakthrough brings us closer to understanding what intelligence really requires.” 乾聲相對混音偏移約180.005秒：**but 03:18.465**；**what 03:22.085**；**requires 03:24.345**結束。 | Task8最後的車、地平線與相機姿態原樣延續。說到“but/every/breakthrough”時，前方一段實體路徑上的平台逐一亮起；“brings us closer”時鏡頭沿路推進，粒子流向遠方的圓形目標環。到“what intelligence really requires”時，清楚呈現兩行大字 **WHAT DOES INTELLIGENCE / REALLY REQUIRE?**。旁白結束後，沿用原始圓形Logo圖像（以圓形alpha遮罩呈現）、旋轉光環、大字科技感 **SUPER INTELLIGENT** 及標語 `Imagine Beyond Tomorrow.`；保留最後數秒停留。 | Task8→Task9用最後地形／車輛／星場及相機狀態做真實物件handoff，不硬切。標題按“what”的詞級時點進場，與Logo分開呈現；品牌字在Logo清晰後才亮起，元素置於16:9安全區，最後畫面留足閱讀時間。片尾音軌保留原混音直到03:30。 |
 
 ## 四、全片動畫與可讀性規則
 
@@ -58,6 +58,7 @@ V5 的方向不是把使用者提供的 motion-design 參考片整套照搬：**
 4. **02:20.4–02:44.35:** Task 6 capability activation, central collision/burst, and rotating brain hologram; approved.
 5. **02:44.35–03:00.70:** Task 7 cinematic brain-to-star-dust flight and particle handoff at the 02:57.455 music cue; positive direction feedback received, and its rover identity is clarified by Task 8.
 6. **03:00.70–03:18.00:** Task 8 complete six-wheel field-rover scene (learn/reason/adapt, unfamiliar terrain, uncertain horizon); local visual/audio-sync QA complete, awaiting user review.
+7. **03:18.00–03:30.00:** Task 9 horizon-to-breakthrough path, final question, and circular-logo brand lock-up; local visual/audio-sync QA complete, awaiting user review.
 
 每段以現有旁白／音樂作同一主時鐘；通過該段後才進到下一段的精修。互動預覽仍不是交付母帶，最終才用 Puppeteer/Three.js 逐格算圖並 FFmpeg 封裝。
 
@@ -72,7 +73,7 @@ V5 的方向不是把使用者提供的 motion-design 參考片整套照搬：**
 - 不更改英文旁白或重新生成旁白／配樂。
 - 不將使用者提供的 motion-design 參考片直接複製成 HUD、平面網格或版型。
 - 不先生成一條完整 3:30 MP4；先用同步網頁和分段預覽降低等待與反覆算圖成本。
-- 其餘任務仍遵循分段審核：目前00:00–03:18.00的連續預覽已包含Task8完整場景；獲使用者確認後才開始Task9，不提前全片算圖。
+- 其餘任務仍遵循分段審核：目前00:00–03:30.00的連續預覽已包含Task9片尾；獲使用者確認後才進入整段V5全片QC與逐格算圖。
 
 ---
 

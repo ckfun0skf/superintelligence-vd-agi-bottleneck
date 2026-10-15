@@ -277,7 +277,7 @@ function renderFrame(frame) {
       positions.set([p.x + Math.cos(a) * r, p.y + .4 + random() * 8.4, p.z - random() * 28], j);
       const c = palette[Math.floor(random() * palette.length)]; colors.set([c.r, c.g, c.b], j);
     }
-    window.__V5_TASK8_EXIT_FIELD = { count: COUNT, positions, colors, cameraPosition: camera.position.clone(), cameraTarget: targetGoal, cameraQuaternion: camera.quaternion.clone(), cameraFov: camera.fov };
+    window.__V5_TASK8_EXIT_FIELD = { count: COUNT, positions, colors, world, backgroundStars: incomingStars, cameraPosition: camera.position.clone(), cameraTarget: targetGoal, cameraQuaternion: camera.quaternion.clone(), cameraFov: camera.fov, fogDensity: scene.fog.density };
     exitReady = true;
   }
   renderer.render(scene, camera);

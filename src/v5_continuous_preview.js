@@ -8,7 +8,8 @@ const CUT_4 = 110.0;
 const CUT_5 = 140.38;
 const CUT_6 = 164.35;
 const CUT_7 = 180.70;
-const DURATION = 198.00;
+const CUT_8 = 198.00;
+const DURATION = 210.00;
 const CUT_1_FRAME = Math.round(CUT_1 * FPS);
 const CUT_2_FRAME = Math.round(CUT_2 * FPS);
 const CUT_3_FRAME = Math.round(CUT_3 * FPS);
@@ -16,6 +17,7 @@ const CUT_4_FRAME = Math.round(CUT_4 * FPS);
 const CUT_5_FRAME = Math.round(CUT_5 * FPS);
 const CUT_6_FRAME = Math.round(CUT_6 * FPS);
 const CUT_7_FRAME = Math.round(CUT_7 * FPS);
+const CUT_8_FRAME = Math.round(CUT_8 * FPS);
 const DURATION_FRAME = Math.round(DURATION * FPS);
 const container = document.getElementById('canvas-container');
 if (!container) throw new Error('V5 preview canvas container is missing.');
@@ -41,6 +43,7 @@ let computeCost;
 let capabilitySystem;
 let unknownHorizon;
 let explorationAdaptation;
+let closingBrand;
 let openingHandoffReady = false;
 let reasoningHandoffReady = false;
 let patternsHandoffReady = false;
@@ -48,6 +51,7 @@ let learningHandoffReady = false;
 let computeHandoffReady = false;
 let capabilityHandoffReady = false;
 let horizonHandoffReady = false;
+let explorationHandoffReady = false;
 let currentTime = 0;
 
 function renderAt(time) {
@@ -106,7 +110,15 @@ function renderAt(time) {
             unknownHorizon.renderFrame(CUT_7_FRAME - CUT_6_FRAME);
             horizonHandoffReady = true;
           }
-          explorationAdaptation.renderFrame(frame - CUT_7_FRAME);
+          if (frame < CUT_8_FRAME) {
+            explorationAdaptation.renderFrame(frame - CUT_7_FRAME);
+          } else {
+            if (!explorationHandoffReady) {
+              explorationAdaptation.renderFrame(CUT_8_FRAME - CUT_7_FRAME);
+              explorationHandoffReady = true;
+            }
+            closingBrand.renderFrame(frame - CUT_8_FRAME);
+          }
         }
       }
     }
@@ -118,7 +130,7 @@ function resize() {
   const width = Math.max(1, container.clientWidth || window.innerWidth);
   const height = Math.max(1, container.clientHeight || Math.round(width * 9 / 16));
   renderer.setSize(width, height, false);
-  if (opening && reasoning && patterns && learning && computeCost && capabilitySystem && unknownHorizon && explorationAdaptation) {
+  if (opening && reasoning && patterns && learning && computeCost && capabilitySystem && unknownHorizon && explorationAdaptation && closingBrand) {
     opening.resize();
     reasoning.resize();
     patterns.resize();
@@ -127,6 +139,7 @@ function resize() {
     capabilitySystem.resize();
     unknownHorizon.resize();
     explorationAdaptation.resize();
+    closingBrand.resize();
     renderAt(currentTime);
   }
 }
@@ -140,6 +153,7 @@ try {
   capabilitySystem = await import('./v5_capability_system_preview.js');
   unknownHorizon = await import('./v5_unknown_horizon_preview.js');
   explorationAdaptation = await import('./v5_exploration_adaptation_preview.js');
+  closingBrand = await import('./v5_closing_brand_preview.js');
   window.renderFrame = frame => renderAt(Math.max(0, Number(frame) || 0) / FPS);
   window.addEventListener('resize', resize);
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(container);
