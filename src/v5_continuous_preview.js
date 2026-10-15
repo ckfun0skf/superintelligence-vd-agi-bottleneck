@@ -6,12 +6,14 @@ const CUT_2 = 50.76;
 const CUT_3 = 82.0;
 const CUT_4 = 110.0;
 const CUT_5 = 140.38;
-const DURATION = 164.35;
+const CUT_6 = 164.35;
+const DURATION = 180.0;
 const CUT_1_FRAME = Math.round(CUT_1 * FPS);
 const CUT_2_FRAME = Math.round(CUT_2 * FPS);
 const CUT_3_FRAME = Math.round(CUT_3 * FPS);
 const CUT_4_FRAME = Math.round(CUT_4 * FPS);
 const CUT_5_FRAME = Math.round(CUT_5 * FPS);
+const CUT_6_FRAME = Math.round(CUT_6 * FPS);
 const DURATION_FRAME = Math.round(DURATION * FPS);
 const container = document.getElementById('canvas-container');
 if (!container) throw new Error('V5 preview canvas container is missing.');
@@ -35,11 +37,13 @@ let patterns;
 let learning;
 let computeCost;
 let capabilitySystem;
+let unknownHorizon;
 let openingHandoffReady = false;
 let reasoningHandoffReady = false;
 let patternsHandoffReady = false;
 let learningHandoffReady = false;
 let computeHandoffReady = false;
+let capabilityHandoffReady = false;
 let currentTime = 0;
 
 function renderAt(time) {
@@ -76,12 +80,22 @@ function renderAt(time) {
           learningHandoffReady = true;
         }
         computeCost.renderFrame(frame - CUT_4_FRAME);
-      } else {
+      } else if (frame < CUT_6_FRAME) {
         if (!computeHandoffReady) {
           computeCost.renderFrame(CUT_5_FRAME - CUT_4_FRAME);
           computeHandoffReady = true;
         }
         capabilitySystem.renderFrame(frame - CUT_5_FRAME);
+      } else {
+        if (!computeHandoffReady) {
+          computeCost.renderFrame(CUT_5_FRAME - CUT_4_FRAME);
+          computeHandoffReady = true;
+        }
+        if (!capabilityHandoffReady) {
+          capabilitySystem.renderFrame(CUT_6_FRAME - CUT_5_FRAME);
+          capabilityHandoffReady = true;
+        }
+        unknownHorizon.renderFrame(frame - CUT_6_FRAME);
       }
     }
   }
@@ -92,13 +106,14 @@ function resize() {
   const width = Math.max(1, container.clientWidth || window.innerWidth);
   const height = Math.max(1, container.clientHeight || Math.round(width * 9 / 16));
   renderer.setSize(width, height, false);
-  if (opening && reasoning && patterns && learning && computeCost && capabilitySystem) {
+  if (opening && reasoning && patterns && learning && computeCost && capabilitySystem && unknownHorizon) {
     opening.resize();
     reasoning.resize();
     patterns.resize();
     learning.resize();
     computeCost.resize();
     capabilitySystem.resize();
+    unknownHorizon.resize();
     renderAt(currentTime);
   }
 }
@@ -110,6 +125,7 @@ try {
   learning = await import('./v5_learning_loop_preview.js');
   computeCost = await import('./v5_compute_cost_preview.js');
   capabilitySystem = await import('./v5_capability_system_preview.js');
+  unknownHorizon = await import('./v5_unknown_horizon_preview.js');
   window.renderFrame = frame => renderAt(Math.max(0, Number(frame) || 0) / FPS);
   window.addEventListener('resize', resize);
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(container);
