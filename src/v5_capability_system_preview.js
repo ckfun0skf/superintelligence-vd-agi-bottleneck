@@ -176,12 +176,12 @@ function buildBrainLinks(positions) {
   return new Float32Array(links);
 }
 const brainCount=brainSurfacePositions.length/3,brainCount3=brainSurfacePositions.length;
-const brainGroup=new THREE.Group();brainGroup.position.set(0,.12,-4.65);brainGroup.scale.setScalar(1.34);scene.add(brainGroup);
+const brainGroup=new THREE.Group();brainGroup.position.set(0,.12,-4.65);brainGroup.scale.setScalar(1.78);scene.add(brainGroup);
 const brainMorphPositions=new Float32Array(brainCount3),brainColors=new Float32Array(brainCount3),burstDirections=new Float32Array(brainCount3),burstRadii=new Float32Array(brainCount);
 const brainBase=new THREE.Color(0x16b8ec),brainAccent=new THREE.Color(0x7d59ff);
 for(let i=0;i<brainCount;i++){
   const j=i*3,mix=.06+random()*.30,col=brainBase.clone().lerp(brainAccent,mix);brainColors.set([col.r,col.g,col.b],j);
-  const z=random()*2-1,a=random()*Math.PI*2,r=Math.sqrt(1-z*z);burstDirections.set([r*Math.cos(a),z,r*Math.sin(a)],j);burstRadii[i]=2.35+random()*2.35;
+  const z=random()*2-1,a=random()*Math.PI*2,r=Math.sqrt(1-z*z);burstDirections.set([r*Math.cos(a),z,r*Math.sin(a)],j);burstRadii[i]=(2.35+random()*2.35)*(1.34/1.78);
 }
 const brainGeometry=new THREE.BufferGeometry();
 brainGeometry.setAttribute('position',new THREE.BufferAttribute(brainMorphPositions,3).setUsage(THREE.DynamicDrawUsage));
