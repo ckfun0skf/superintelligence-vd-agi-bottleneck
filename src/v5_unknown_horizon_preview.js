@@ -254,6 +254,15 @@ function prepareIncoming() {
 }
 
 const v = new THREE.Vector3();
+let exitFieldReady = false;
+function cloneForHandoff(root) {
+  const copy = root.clone(true);
+  copy.traverse(object => {
+    if (!object.material) return;
+    object.material = Array.isArray(object.material) ? object.material.map(material => material.clone()) : object.material.clone();
+  });
+  return copy;
+}
 function renderFrame(frame) {
   prepareIncoming();
   const t = clamp(Number(frame) / FPS, 0, DURATION);
@@ -354,10 +363,11 @@ function renderFrame(frame) {
   const titleAlpha = 1 - smoothstep((t - .78) / 1.15);
   setTextAlpha(whenTitle, titleAlpha);
 
-  if (t >= DURATION - 1 / FPS) {
+  if (t >= DURATION - 1 / FPS && !exitFieldReady) {
     const positions = new Float32Array(COUNT * 3);
     positions.set(currentPositions);
-    window.__V5_HORIZON_EXIT_FIELD = { count: COUNT, positions, colors: new Float32Array(currentColors), cameraPosition: camera.position.clone(), cameraTarget: aim.clone(), starRotationY: backgroundStars.rotation.y };
+    window.__V5_HORIZON_EXIT_FIELD = { count: COUNT, positions, colors: new Float32Array(currentColors), cameraPosition: camera.position.clone(), cameraTarget: aim.clone(), cameraQuaternion: camera.quaternion.clone(), cameraFov: camera.fov, starRotationY: backgroundStars.rotation.y, nextWorld: cloneForHandoff(nextWorld), backgroundStars: cloneForHandoff(backgroundStars) };
+    exitFieldReady = true;
   }
   renderer.render(scene, camera);
   window.__sceneTime = START + t;
